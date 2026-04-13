@@ -22,20 +22,14 @@ import {
 } from '@vicons/ionicons5'
 
 const { t } = useI18n()
-const { currentTheme, toggleTheme, setTheme } = useTheme()
+const { currentTheme, setTheme } = useTheme()
 
 // 包装成渲染函数
 function renderIcon(icon: any) {
   return () => h(NIcon, null, { default: () => h(icon) })
 }
 
-interface MenuItem {
-  label: string
-  key: string
-  icon: any
-}
-
-const menuOptions = ref<MenuItem[]>([
+const menuOptions = computed(() => [
   { label: t('sidebar.welcome'), key: 'welcome', icon: renderIcon(HomeIcon) },
   { label: t('sidebar.chat'), key: 'chat', icon: renderIcon(ChatIcon) },
   { label: t('sidebar.model'), key: 'model', icon: renderIcon(ModelIcon) },
@@ -85,7 +79,7 @@ const handleMenuClick = (key: string) => {
 </script>
 
 <template>
-  <div style="height: 100vh; display: flex; flex-direction: column; background: var(--n-color, #f8f9fa);">
+  <div style="height: 100vh; display: flex; flex-direction: column; background: var(--n-color);">
     <n-layout style="height: 100%; background: transparent;">
       <!-- 顶部标题栏 -->
       <n-layout-header bordered style="background-color: var(--n-color, #ffffff); box-shadow: 0 1px 4px rgba(0,0,0,0.04);">
@@ -94,7 +88,7 @@ const handleMenuClick = (key: string) => {
             <span class="app-title">Azusa</span>
             <span class="app-version">v0.0.1</span>
           </div>
-          
+
           <div class="header-right">
             <n-dropdown
               trigger="click"
@@ -138,9 +132,8 @@ const handleMenuClick = (key: string) => {
         </n-layout-sider>
 
         <!-- 右侧内容区域 -->
-        <n-layout-content
-          embedded
-          content-style="padding: 20px; border-radius: 8px;"
+        <n-layout-content 
+          content-style="padding: 20px;" 
           :style="{ backgroundColor: 'var(--n-color, #ffffff)' }"
         >
           <div class="content-wrapper">
@@ -191,9 +184,7 @@ const handleMenuClick = (key: string) => {
 }
 
 .content-wrapper {
-  min-height: calc(100vh - 128px);
-  background: #f8f9fa;
-  border-radius: 8px;
+  min-height: calc(100vh - 105px);
 }
 
 /* 菜单项目样式美化 */

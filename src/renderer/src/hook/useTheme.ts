@@ -26,6 +26,8 @@ function initTheme() {
     }
     document.documentElement.setAttribute('data-theme', activeTheme.value)
     localStorage.setItem('theme', theme)
+    // 同步 body 背景，解决底部白条问题
+    document.body.style.backgroundColor = activeTheme.value === 'dark' ? '#1e1e1e' : '#f5f5f5'
   }
 
   compute(currentTheme.value, osTheme.value)
