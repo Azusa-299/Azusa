@@ -16,3 +16,12 @@ settings:
   title: Settings
   language: Language
   theme: Theme
+model:
+  chatModel: Chat Model
+  addProvider: Add Provider
+  selectModel: Select model
+  inputId: Enter source ID
+  inputApiKey: Enter API Key
+  inputApiKeyEdit: Leave empty to keep unchanged
+  inputBaseUrl: Enter API Base URL
+  save: Save
