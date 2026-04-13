@@ -4,15 +4,16 @@
     "src/renderer/src/env.d.ts",
     "src/renderer/src/**/*",
     "src/renderer/src/**/*.vue",
-    "src/preload/*.d.ts"
+    "src/preload/*.d.ts",
+    "plugins/i18n/**/*",
+    "plugins/i18n/types.d.ts"
   ],
   "compilerOptions": {
     "composite": true,
     "baseUrl": ".",
     "paths": {
-      "@renderer/*": [
-        "src/renderer/src/*"
-      ]
+      "@renderer/*": ["src/renderer/src/*"],
+      "@plugins/*": ["plugins/*"]
     },
     "ignoreDeprecations": "6.0"
   }

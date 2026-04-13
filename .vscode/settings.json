@@ -10,9 +10,21 @@
   },
   "cSpell.words": [
     "Azusa",
-    "sider"
+    "Chatbubbles",
+    "intlify",
+    "ionicons",
+    "sider",
+    "vicons"
   ],
   "i18n-ally.localesPaths": [
-    "plugins/i18n"
-  ]
+    "plugins/i18n/locales"
+  ],
+  "i18n-ally.keystyle": "nested",
+  "i18n-ally.enabledFrameworks": [
+    "vue"
+  ],
+  "i18n-ally.sourceLanguage": "zh-CN",
+  "i18n-ally.displayLanguage": "zh-CN",
+  "i18n-ally.namespace": false,
+  "i18n-ally.pathMatcher": "{locale}.yaml"
 }

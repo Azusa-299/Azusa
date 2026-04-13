@@ -1,0 +1,10 @@
+sidebar:
+  welcome: Welcome
+  chat: Chat
+  model: Models
+  setting: Settings
+  about: About
+theme:
+  light: Light
+  dark: Dark
+  auto: System

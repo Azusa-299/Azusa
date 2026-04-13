@@ -1,0 +1,10 @@
+sidebar:
+  welcome: 欢迎
+  chat: 对话
+  model: 模型
+  setting: 设置
+  about: 关于
+theme:
+  light: 浅色
+  dark: 深色
+  auto: 跟随系统

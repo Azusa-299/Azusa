@@ -1,6 +1,7 @@
 import { resolve } from 'path'
 import { defineConfig } from 'electron-vite'
 import vue from '@vitejs/plugin-vue'
+import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite'
 
 export default defineConfig({
   main: {},
@@ -8,9 +9,15 @@ export default defineConfig({
   renderer: {
     resolve: {
       alias: {
-        '@renderer': resolve('src/renderer/src')
+        '@renderer': resolve('src/renderer/src'),
+        '@plugins': resolve('plugins')
       }
     },
-    plugins: [vue()]
+    plugins: [
+      vue(),
+      VueI18nPlugin({
+        include: resolve('plugins/i18n/locales/**')
+      })
+    ]
   }
 })
