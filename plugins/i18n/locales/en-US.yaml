@@ -8,3 +8,7 @@ theme:
   light: Light
   dark: Dark
   auto: System
+welcome:
+  title: Welcome to Azusa
+  subtitle: Your AI Desktop Assistant
+  hint: Select a feature from the sidebar to get started

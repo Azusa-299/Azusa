@@ -8,3 +8,7 @@ theme:
   light: 浅色
   dark: 深色
   auto: 跟随系统
+welcome:
+  title: 欢迎使用 Azusa
+  subtitle: 你的 AI 桌面助手
+  hint: 从左侧选择功能开始使用

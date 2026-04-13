@@ -138,7 +138,11 @@ const handleMenuClick = (key: string) => {
         </n-layout-sider>
 
         <!-- 右侧内容区域 -->
-        <n-layout-content embedded content-style="padding: 20px; background: var(--n-color, #f8f9fa);">
+        <n-layout-content
+          embedded
+          content-style="padding: 20px; border-radius: 8px;"
+          :style="{ backgroundColor: 'var(--n-color, #ffffff)' }"
+        >
           <div class="content-wrapper">
             <component :is="currentComponent" />
           </div>
@@ -169,7 +173,7 @@ const handleMenuClick = (key: string) => {
 }
 
 .app-title {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #32f107 0%, #00a488 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -178,8 +182,12 @@ const handleMenuClick = (key: string) => {
 }
 
 .app-version {
-  color: var(--n-text-color-3, #8c8c8c);
-  background: var(--n-color-embedded, #f0f0f0);
+  font-size: 12px;
+  color: var(--n-text-color-3);
+  padding: 4px 10px;
+  background: var(--n-color-embedded);
+  border-radius: 20px;
+  font-weight: 500;
 }
 
 .content-wrapper {
@@ -204,7 +212,7 @@ const handleMenuClick = (key: string) => {
 }
 
 :deep(.n-menu-item.n-menu-item--selected) {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  background: linear-gradient(135deg, #32f107 0%, #00a488 100%) !important;
   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
 }
 
@@ -226,7 +234,7 @@ const handleMenuClick = (key: string) => {
 }
 
 :deep(.n-menu-item:hover .n-icon) {
-  color: #667eea;
+  color: #00c84d;
 }
 
 ::deep(.n-layout-sider-trigger) {
