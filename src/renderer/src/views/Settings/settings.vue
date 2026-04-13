@@ -80,14 +80,14 @@ const handleThemeChange = (val: string) => {
 
 <style scoped>
 .settings {
-  max-width: 600px;
+  max-width: 660px;
 }
 
 .settings-title {
   font-size: 20px;
   font-weight: 600;
   color: v-bind('vars.textColor1');
-  margin: 0 0 16px;
+  margin: 0px 10px 10px;
 }
 
 .setting-row {
