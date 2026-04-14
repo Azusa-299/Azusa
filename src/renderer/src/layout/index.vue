@@ -1,5 +1,14 @@
 <script setup lang="ts">
-import { NLayout, NLayoutHeader, NLayoutSider, NLayoutContent, NMenu, NIcon, NButton, NDropdown } from 'naive-ui'
+import {
+  NLayout,
+  NLayoutHeader,
+  NLayoutSider,
+  NLayoutContent,
+  NMenu,
+  NIcon,
+  NButton,
+  NDropdown
+} from 'naive-ui'
 import { ref, computed, h } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTheme } from '@renderer/hook/useTheme'

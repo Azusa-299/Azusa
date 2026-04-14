@@ -6,7 +6,8 @@
     "src/renderer/src/**/*.vue",
     "src/preload/*.d.ts",
     "plugins/i18n/**/*",
-    "plugins/i18n/types.d.ts"
+    "plugins/i18n/types.d.ts",
+    "plugins/providers/**/*"
   ],
   "compilerOptions": {
     "composite": true,

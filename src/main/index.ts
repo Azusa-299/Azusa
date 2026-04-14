@@ -1,13 +1,15 @@
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import { readConfig, writeConfig } from './config'
+import { fetchModels } from './fetchModels'
 import icon from '../../resources/icon.png?asset'
 
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
+    width: 1000,
+    height: 700,
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
@@ -72,3 +74,12 @@ app.on('window-all-closed', () => {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
+
+// 配置读写
+ipcMain.handle('config:read', () => readConfig())
+ipcMain.handle('config:write', (_, data) => writeConfig(data))
+
+// 刷新模型列表
+ipcMain.handle('models:fetch', (_, { providerId, apiKey, baseUrl }) => {
+  return fetchModels(providerId, apiKey, baseUrl)
+})

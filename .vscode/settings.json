@@ -11,11 +11,14 @@
   "cSpell.words": [
     "Azusa",
     "Chatbubbles",
+    "deepseek",
     "intlify",
     "ionicons",
+    "ollama",
     "sider",
     "topbar",
-    "vicons"
+    "vicons",
+    "zhipu"
   ],
   "i18n-ally.localesPaths": [
     "plugins/i18n/locales"
