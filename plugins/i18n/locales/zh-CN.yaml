@@ -16,6 +16,20 @@ settings:
   title: 设置
   language: 语言
   theme: 主题
+chat:
+  chat: 对话
+  newConversation: 新对话
+  emptyConversations: 暂无对话
+  noActiveConversation: 请选择或创建对话
+  startConversation: 开始新对话
+  selectModel: 选择模型
+  inputPlaceholder: 输入消息，Enter 发送...
+  delete: 删除
+  conversationManage: 对话管理
+  messageCount: 条消息
+  yesterday: 昨天
+  daysAgo: "{days} 天前"
+  mockReply: 这是一个模拟回复。实际项目中这里应该调用AI接口。
 model:
   chatModel: 对话模型
   addProvider: 添加模型源

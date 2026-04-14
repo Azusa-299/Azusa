@@ -16,6 +16,20 @@ settings:
   title: Settings
   language: Language
   theme: Theme
+chat:
+  chat: Chat
+  newConversation: New Chat
+  emptyConversations: No conversations
+  noActiveConversation: Select or create a conversation
+  startConversation: Start Chat
+  selectModel: Select model
+  inputPlaceholder: Type a message, press Enter to send...
+  delete: Delete
+  conversationManage: Conversations
+  messageCount: messages
+  yesterday: Yesterday
+  daysAgo: "{days} days ago"
+  mockReply: This is a mock reply. The AI API should be called here in production.
 model:
   chatModel: Chat Model
   addProvider: Add Provider

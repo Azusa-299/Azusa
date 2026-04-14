@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { NTabs, NTabPane } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import ChatModelPanel from './ChatModelPanel.vue'
@@ -15,7 +15,7 @@ const activeTab = ref('chatModel')
         <ChatModelPanel />
       </n-tab-pane>
       <!-- 后续加 tab 在这追加就行，比如：
-      <n-tab-pane name="imageModel" :tab="t('model.imageModel')">
+      <n-tab-pane name="imageModel" :tab="t('')">
         <ImageModelPanel />
       </n-tab-pane>
       -->

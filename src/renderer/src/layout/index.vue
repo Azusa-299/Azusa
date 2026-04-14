@@ -185,6 +185,8 @@ const handleMenuClick = (key: string) => {
 
 .content-wrapper {
   min-height: calc(100vh - 105px);
+  height: calc(100vh - 105px);
+  overflow: hidden;
 }
 
 /* 菜单项目样式美化 */
