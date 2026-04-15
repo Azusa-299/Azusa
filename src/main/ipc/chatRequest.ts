@@ -100,59 +100,79 @@ function parseOpenAIChunk(line: string): string | null {
   }
 }
 
-// 主函数：处理聊天请求，发送流式响应给 renderer
+// 当前流式请求的 AbortController 和 Reader
+let currentAbortController: AbortController | null = null
+let currentReader: ReadableStreamDefaultReader | null = null
+
 export async function chatRequestStream(
   win: BrowserWindow,
   req: ChatRequest
 ): Promise<void> {
-  // console.log('chatRequestStream called:', req)
-
   const provider = getProviderConfig(req.providerId)
-  // console.log('provider config:', provider)
-
   const url = buildUrl(provider, req.modelId, req.apiKey)
-  // console.log('request url:', url)
-
   const headers = buildHeaders(provider, req.apiKey)
   const body = buildBody(provider, req.modelId, req.messages)
 
-  // console.log('request headers:', headers)
-  // console.log('request body:', body)
+  currentAbortController = new AbortController()
 
   const res = await fetch(url, {
     method: 'POST',
     headers,
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
+    signal: currentAbortController.signal
   })
 
-  // console.log('response status:', res.status)
-
   if (!res.ok) {
+    currentAbortController = null
     win.webContents.send('chat:stream:error', `请求失败: ${res.status}`)
     return
   }
 
-  const reader = res.body?.getReader()
+  currentReader = res.body?.getReader() || null
   const decoder = new TextDecoder()
   let buffer = ''
 
   const parseChunk = provider.streamFormat === 'ollama' ? parseOllamaChunk : parseOpenAIChunk
 
-  while (reader) {
-    const { done, value } = await reader.read()
-    if (done) break
+  try {
+    while (currentReader) {
+      // 检查是否已中断
+      if (currentAbortController?.signal.aborted) break
 
-    buffer += decoder.decode(value, { stream: true })
-    const lines = buffer.split('\n')
-    buffer = lines.pop() || ''
+      const { done, value } = await currentReader.read()
+      if (done) break
 
-    for (const line of lines) {
-      const chunk = parseChunk(line)
-      if (chunk) {
-        win.webContents.send('chat:stream:chunk', chunk)
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() || ''
+
+      for (const line of lines) {
+        const chunk = parseChunk(line)
+        if (chunk) {
+          win.webContents.send('chat:stream:chunk', chunk)
+        }
       }
     }
+    win.webContents.send('chat:stream:end')
+  } catch (err: any) {
+    if (err.name === 'AbortError') {
+      win.webContents.send('chat:stream:end')
+    } else {
+      win.webContents.send('chat:stream:error', `流式读取失败: ${err.message}`)
+    }
+  } finally {
+    currentAbortController = null
+    currentReader = null
   }
+}
 
-  win.webContents.send('chat:stream:end')
+// 中断当前流式请求
+export function abortChatStream(): void {
+  if (currentAbortController) {
+    currentAbortController.abort()
+  }
+  if (currentReader) {
+    currentReader.cancel().catch(() => {})
+    currentReader = null
+  }
 }

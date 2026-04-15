@@ -13,7 +13,7 @@ import {
   NSelect
 } from 'naive-ui'
 import type { DrawerPlacement } from 'naive-ui'
-import { Menu, Send, Add, ChatbubblesOutline, TrashOutline } from '@vicons/ionicons5'
+import { Menu, Send, Add, ChatbubblesOutline, TrashOutline, StopCircleOutline } from '@vicons/ionicons5'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -45,6 +45,9 @@ const sessions = ref<ChatSession[]>([])
 
 // 当前会话的消息
 const messages = ref<ChatMessage[]>([])
+
+// 是否正在流式输出
+const isStreaming = ref(false)
 
 // 选择模型
 const selectedOption = ref<string>('')
@@ -138,6 +141,7 @@ async function sendMessage() {
   // 添加空的 assistant 消息用于流式填充
   messages.value.push({ role: 'assistant', content: '' })
   const assistantIndex = messages.value.length - 1
+  isStreaming.value = true
 
   // 解析选择的模型
   const [sourceId, modelId] = selectedOption.value.split('::')
@@ -151,7 +155,17 @@ async function sendMessage() {
     messages.value[assistantIndex].content += chunk
   })
 
+  // 设置流式结束回调
   window.api.chat.onEnd(() => {
+    isStreaming.value = false
+    updateCurrentSession()
+    window.api.chat.removeAllListeners()
+  })
+
+  // 设置流式错误回调
+  window.api.chat.onError((err: string) => {
+    isStreaming.value = false
+    messages.value[assistantIndex].content += `\n[请求失败: ${err}]`
     updateCurrentSession()
     window.api.chat.removeAllListeners()
   })
@@ -164,6 +178,18 @@ async function sendMessage() {
     baseUrl: source.baseUrl,
     messages: JSON.parse(JSON.stringify(messages.value.slice(0, -1)))
   })
+}
+
+// 停止流式输出
+function stopStreaming() {
+  window.api.chat.abort()
+  setTimeout(() => {
+    if (isStreaming.value) {
+      isStreaming.value = false
+      updateCurrentSession()
+      window.api.chat.removeAllListeners()
+    }
+  }, 1000)
 }
 
 // 组件卸载时清理
@@ -260,9 +286,23 @@ initSessions()
           :bordered="false"
           round
           clearable
-          @keyup.enter="sendMessage"
+          @keyup.enter="!isStreaming && sendMessage()"
         />
+        <!-- 流式输出中显示停止按钮，否则显示发送按钮 -->
         <n-button
+          v-if="isStreaming"
+          quaternary
+          circle
+          size="small"
+          type="error"
+          @click="stopStreaming"
+        >
+          <template #icon>
+            <n-icon :size="18"><StopCircleOutline /></n-icon>
+          </template>
+        </n-button>
+        <n-button
+          v-else
           quaternary
           circle
           size="small"

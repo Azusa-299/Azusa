@@ -12,8 +12,10 @@ interface ApiModels {
 interface ApiChat {
   request: (req: any) => Promise<string>
   stream: (req: any) => Promise<void>
+  abort: () => Promise<void>
   onChunk: (callback: (chunk: string) => void) => void
   onEnd: (callback: () => void) => void
+  onError: (callback: (err: string) => void) => void
   removeAllListeners: () => void
 }
 

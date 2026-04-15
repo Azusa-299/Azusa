@@ -18,6 +18,9 @@ const api = {
     // 流式请求
     stream: (req: any) => ipcRenderer.invoke('chat:stream', req),
 
+    // 中断流式请求
+    abort: () => ipcRenderer.invoke('chat:stream:abort'),
+
     // 监听流式数据块
     onChunk: (callback: (chunk: string) => void) => {
       ipcRenderer.on('chat:stream:chunk', (_, chunk) => callback(chunk))

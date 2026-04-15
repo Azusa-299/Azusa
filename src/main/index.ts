@@ -3,7 +3,7 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { readConfig, writeConfig } from './ipc/config'
 import { fetchModels } from './ipc/fetchModels'
-import { chatRequestStream } from './ipc/chatRequest'
+import { chatRequestStream, abortChatStream } from './ipc/chatRequest'
 import icon from '../../resources/icon.png?asset'
 
 function createWindow(): void {
@@ -94,4 +94,9 @@ ipcMain.handle('chat:stream', (event, req) => {
       console.error('Stream error:', err)
     })
   }
+})
+
+// 中断流式请求
+ipcMain.handle('chat:stream:abort', () => {
+  abortChatStream()
 })
