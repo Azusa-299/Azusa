@@ -394,6 +394,10 @@ initSessions()
   background-color: var(--n-color-modal);
   color: var(--n-text-color);
   border-bottom-left-radius: 4px;
+  position: relative;
+
+  border: 1px solid #218e00;
+  border-radius: 12px 12px 12px 4px;
 }
 
 .chat-empty {
