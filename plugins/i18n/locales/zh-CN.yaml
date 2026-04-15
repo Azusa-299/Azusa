@@ -45,3 +45,6 @@ model:
   refresh: 刷新
   refreshHint: 点击刷新获取模型列表
   save: 保存
+  idRequired: ID 不能为空
+  saveSuccess: 保存成功
+  saveFailed: 保存失败

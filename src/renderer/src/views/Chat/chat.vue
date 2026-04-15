@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import {
   NButton,
   NDrawer,
@@ -47,11 +47,7 @@ const messages = ref<ChatMessage[]>([])
 
 // 选择模型
 const selectedOption = ref<string>('')
-const selectOptions = ref([
-  { label: '选项1', value: 'option1' },
-  { label: '选项2', value: 'option2' },
-  { label: '选项3', value: 'option3' }
-])
+const selectOptions = ref<{ label: string; value: string }[]>([])
 
 // 初始化：创建默认会话
 function initSessions() {
@@ -163,6 +159,23 @@ function formatTime(date: Date): string {
   }
 }
 
+// 获取模型列表
+onMounted(async () => {
+  const config = await window.api.config.read()
+  if (config.providers) {
+    const opts: { label: string; value: string }[] = []
+    for (const [sourceId, source] of Object.entries(config.providers as Record<string, any>)) {
+      if (!source.enable) continue
+      const enabled = source.enabledModels?.length ? source.enabledModels : source.models || []
+      enabled.forEach((m: string) =>
+        opts.push({ label: m, value: `${sourceId}::${m}` })
+      )
+    }
+    selectOptions.value = opts
+    if (opts.length) selectedOption.value = opts[0].value
+  }
+})
+
 // 初始化
 initSessions()
 </script>
@@ -210,7 +223,7 @@ initSessions()
           placeholder="选择"
           type="textarea"
           size="medium"
-          style="width: 100px; margin-right: 8px"
+          style="width: 160px; margin-right: 8px"
           />
         <n-input
           v-model:value="inputValue"
@@ -370,7 +383,7 @@ initSessions()
 .input-box {
   display: flex;
   align-items: center;
-  width: 500px;
+  width: 650px;
   max-width: 100%;
   padding: 6px 6px 6px 16px;
   border-radius: 24px;

@@ -11,12 +11,14 @@ import {
   NIcon,
   NDataTable,
   NScrollbar,
+  useMessage
 } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { AddOutline, TrashOutline, RefreshOutline } from '@vicons/ionicons5'
 import { allProviders } from '@plugins/providers/providers'
 
 const { t } = useI18n()
+const message = useMessage()
 
 // Provider 下拉选项（固定列表）
 const providerOptions = allProviders.map(p => ({
@@ -84,11 +86,11 @@ const modelColumns = [
 
 
 // 切换源时同步已启用模型
-async function syncEnabledModels() {
-  const config = await window.api.config.read()
-  const sourceModels = config.providers?.[form.value.id]?.enabledModels || []
-  enabledModelIds.value = sourceModels
-}
+// async function syncEnabledModels() {
+//   const config = await window.api.config.read()
+//   const sourceModels = config.providers?.[form.value.id]?.enabledModels || []
+//   enabledModelIds.value = sourceModels
+// }
 
 // 切换开关
 function toggleModel(modelId: string, val: boolean) {
@@ -164,30 +166,39 @@ async function refreshModels() {
 
 // 保存源到 config.json
 async function saveSource() {
-  if (!form.value.id) return
-  const config = await window.api.config.read()
-  if (!config.providers) config.providers = {}
-
-  config.providers[form.value.id] = {
-    provider: form.value.provider,
-    apiKey: form.value.apiKey,
-    baseUrl: form.value.baseUrl,
-    enable: form.value.enable,
-    models: [...modelList.value.map(m => m.id)],
-    enabledModels: [...enabledModelIds.value]
+  if (!form.value.id) {
+    message.warning(t('model.inputIdPlaceholder'))
+    return
   }
-  await window.api.config.write(config)
 
-  // 刷新左侧列表
-  isNew.value = false
-  selectedSourceId.value = form.value.id
-  savedSources.value = Object.entries(config.providers).map(([id, val]: [string, any]) => ({
-    id,
-    provider: val.provider || '',
-    apiKey: val.apiKey || '',
-    baseUrl: val.baseUrl || '',
-    enable: val.enable !== false
-  }))
+  try {
+    message.success(t('model.saveSuccess'))
+    const config = await window.api.config.read()
+    if (!config.providers) config.providers = {}
+
+    config.providers[form.value.id] = {
+      provider: form.value.provider,
+      apiKey: form.value.apiKey,
+      baseUrl: form.value.baseUrl,
+      enable: form.value.enable,
+      models: [...modelList.value.map(m => m.id)],
+      enabledModels: [...enabledModelIds.value]
+    }
+    await window.api.config.write(config)
+
+    // 刷新左侧列表
+    isNew.value = false
+    selectedSourceId.value = form.value.id
+    savedSources.value = Object.entries(config.providers).map(([id, val]: [string, any]) => ({
+      id,
+      provider: val.provider || '',
+      apiKey: val.apiKey || '',
+      baseUrl: val.baseUrl || '',
+      enable: val.enable !== false
+    }))
+  } catch (error) {
+    message.error(t('model.saveFailed'))
+  }
 }
 
 // 删除源
