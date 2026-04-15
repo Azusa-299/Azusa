@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import {
   NButton,
   NDrawer,
@@ -21,8 +21,6 @@ const { t } = useI18n()
 const drawerActive = ref(false)
 const placement = ref<DrawerPlacement>('right')
 
-const inputValue = ref('')
-
 interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
@@ -35,6 +33,9 @@ interface ChatSession {
   createdAt: Date
   updatedAt: Date
 }
+
+// 输入框
+const inputValue = ref('')
 
 // 当前激活的会话ID
 const currentSessionId = ref<string>('')
@@ -126,21 +127,49 @@ function updateCurrentSession() {
   }
 }
 
-function sendMessage() {
+// 发送消息
+async function sendMessage() {
   const text = inputValue.value.trim()
   if (!text) return
   messages.value.push({ role: 'user', content: text })
   inputValue.value = ''
   updateCurrentSession()
-  // 模拟AI回复（实际项目中这里应该调用API）
-  setTimeout(() => {
-    messages.value.push({
-      role: 'assistant',
-      content: t('chat.mockReply') 
-    })
+
+  // 添加空的 assistant 消息用于流式填充
+  messages.value.push({ role: 'assistant', content: '' })
+  const assistantIndex = messages.value.length - 1
+
+  // 解析选择的模型
+  const [sourceId, modelId] = selectedOption.value.split('::')
+
+  // 读取配置获取 apiKey 和 baseUrl
+  const config = await window.api.config.read()
+  const source = config.providers?.[sourceId]
+
+  // 设置流式回调
+  window.api.chat.onChunk((chunk: string) => {
+    messages.value[assistantIndex].content += chunk
+  })
+
+  window.api.chat.onEnd(() => {
     updateCurrentSession()
-  }, 500)
+    window.api.chat.removeAllListeners()
+  })
+
+  // 发起流式请求
+  await window.api.chat.stream({
+    providerId: source.provider,
+    modelId,
+    apiKey: source.apiKey,
+    baseUrl: source.baseUrl,
+    messages: JSON.parse(JSON.stringify(messages.value.slice(0, -1)))
+  })
 }
+
+// 组件卸载时清理
+onUnmounted(() => {
+  window.api.chat.removeAllListeners()
+})
 
 // 格式化时间
 function formatTime(date: Date): string {

@@ -3,7 +3,7 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { readConfig, writeConfig } from './ipc/config'
 import { fetchModels } from './ipc/fetchModels'
-import { chatRequest } from './ipc/chatRequest'
+import { chatRequestStream } from './ipc/chatRequest'
 import icon from '../../resources/icon.png?asset'
 
 function createWindow(): void {
@@ -85,5 +85,13 @@ ipcMain.handle('models:fetch', (_, { providerId, apiKey, baseUrl }) => {
   return fetchModels(providerId, apiKey, baseUrl)
 })
 
-// 聊天请求
-ipcMain.handle('chat:request', (_, req) => chatRequest(req))
+// 流式聊天请求
+ipcMain.handle('chat:stream', (event, req) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  if (win) {
+    // 返回 Promise 但实际通过事件推送数据
+    chatRequestStream(win, req).catch(err => {
+      console.error('Stream error:', err)
+    })
+  }
+})

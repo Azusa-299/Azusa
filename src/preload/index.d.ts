@@ -9,9 +9,18 @@ interface ApiModels {
   fetch: (providerId: string, apiKey: string, baseUrl?: string) => Promise<string[]>
 }
 
+interface ApiChat {
+  request: (req: any) => Promise<string>
+  stream: (req: any) => Promise<void>
+  onChunk: (callback: (chunk: string) => void) => void
+  onEnd: (callback: () => void) => void
+  removeAllListeners: () => void
+}
+
 interface Api {
   config: ApiConfig
   models: ApiModels
+  chat: ApiChat
 }
 
 declare global {

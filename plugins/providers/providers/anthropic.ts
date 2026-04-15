@@ -6,5 +6,6 @@ export const anthropic: Provider = {
   baseUrl: 'https://api.anthropic.com/v1',
   apiKeyFormat: 'sk-ant-...',
   features: ['chat', 'vision', 'tool_use'],
-  modelsEndpoint: '/models'
+  modelsEndpoint: '/models',
+  authType: 'bearer'
 }

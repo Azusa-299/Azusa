@@ -6,5 +6,6 @@ export const openai: Provider = {
   baseUrl: 'https://api.openai.com/v1',
   apiKeyFormat: 'sk-...',
   features: ['chat', 'vision', 'tool_use', 'voice', 'image'],
-  modelsEndpoint: '/models'
+  modelsEndpoint: '/models',
+  authType: 'bearer'
 }

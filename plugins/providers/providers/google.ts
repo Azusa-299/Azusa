@@ -6,5 +6,7 @@ export const google: Provider = {
   baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
   apiKeyFormat: 'AIza...',
   features: ['chat', 'vision', 'tool_use', 'image'],
-  modelsEndpoint: '/models'
+  modelsEndpoint: '/models',
+  chatEndpoint: '/models',
+  authType: 'apikey-query'
 }
