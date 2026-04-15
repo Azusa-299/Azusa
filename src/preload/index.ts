@@ -10,6 +10,9 @@ const api = {
   models: {
     fetch: (providerId: string, apiKey: string, baseUrl?: string) =>
       ipcRenderer.invoke('models:fetch', { providerId, apiKey, baseUrl })
+  },
+  chat: {
+    request: (req: any) => ipcRenderer.invoke('chat:request', req)
   }
 }
 

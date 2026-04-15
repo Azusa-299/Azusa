@@ -1,6 +1,17 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { NSplit, NCard, NForm, NFormItem, NSelect, NInput, NButton, NSwitch, NIcon, NTag, NSpin } from 'naive-ui'
+import { ref, onMounted, h, computed } from 'vue'
+import {
+  NSplit,
+  NForm,
+  NFormItem,
+  NSelect,
+  NInput,
+  NButton,
+  NSwitch,
+  NIcon,
+  NDataTable,
+  NScrollbar,
+} from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { AddOutline, TrashOutline, RefreshOutline } from '@vicons/ionicons5'
 import { allProviders } from '@plugins/providers/providers'
@@ -35,8 +46,11 @@ const selectedSourceId = ref<string | null>(null)
 const isNew = ref(true)
 
 // ---- 模型列表 ----
-const modelList = ref<string[]>([])
+const modelList = ref<{ id: string }[]>([])
 const modelsLoading = ref(false)
+
+// ---- 模型启用状态 ----
+const enabledModelIds = ref<string[]>([])
 
 // 初始化：从 config.json 读源列表
 onMounted(async () => {
@@ -52,6 +66,39 @@ onMounted(async () => {
   }
 })
 
+const modelColumns = [
+  { title: 'ID', key: 'id' },
+  {
+    title: '',
+    key: 'enable',
+    width: 60,
+    align: 'center' as const,
+    render(row: { id: string }) {
+      return h(NSwitch, {
+        value: enabledModelIds.value.includes(row.id),
+        onUpdateValue: (val: boolean) => toggleModel(row.id, val)
+      })
+    }
+  }
+]
+
+
+// 切换源时同步已启用模型
+async function syncEnabledModels() {
+  const config = await window.api.config.read()
+  const sourceModels = config.providers?.[form.value.id]?.enabledModels || []
+  enabledModelIds.value = sourceModels
+}
+
+// 切换开关
+function toggleModel(modelId: string, val: boolean) {
+  if (val) {
+    if (!enabledModelIds.value.includes(modelId)) enabledModelIds.value.push(modelId)
+  } else {
+    enabledModelIds.value = enabledModelIds.value.filter(id => id !== modelId)
+  }
+}
+
 // 选已有源 → 填充表单
 function selectSource(source: SourceItem) {
   isNew.value = false
@@ -64,6 +111,7 @@ function selectSource(source: SourceItem) {
   form.value.enable = source.enable
   // 先清空再加载
   modelList.value = []
+  enabledModelIds.value = []
   loadCachedModels(source.id)
 }
 
@@ -73,29 +121,46 @@ function clickNew() {
   selectedSourceId.value = null
   form.value = { provider: '', id: '', apiKey: '', baseUrl: '', enable: true }
   modelList.value = []
+  enabledModelIds.value = []
 }
 
 // 从 config 读缓存的模型
 async function loadCachedModels(sourceId: string) {
   const config = await window.api.config.read()
-  modelList.value = config.providers?.[sourceId]?.models || []
+  const models = config.providers?.[sourceId]?.models || []
+  modelList.value = models.map((m: string) => ({ id: m }))
+  // 同步启用状态
+  enabledModelIds.value = config.providers?.[sourceId]?.enabledModels || []
 }
 
 // 刷新模型列表
 async function refreshModels() {
-  if (!form.value.provider || !form.value.apiKey) return
+  console.log('refreshModels called, form:', JSON.stringify(form.value))
+
+  // Ollama 可能不需要 API Key，其他供应商必须有 API Key
+  if (!form.value.provider || (!isOllama && !form.value.apiKey)) {
+    console.log('blocked: provider or apiKey is empty')
+    return
+  }
+
   modelsLoading.value = true
   try {
+    // 调用主进程 API 获取模型列表
     const models = await window.api.models.fetch(
       form.value.provider,
       form.value.apiKey,
       form.value.baseUrl || undefined
     )
-    modelList.value = models
+    // 将字符串数组转换为 { id: string }[] 格式
+    modelList.value = models.map((model: string) => ({ id: model }))
+    console.log('fetched models:', modelList.value)
+  } catch (e) {
+    console.error('fetchModels error:', e)
   } finally {
     modelsLoading.value = false
   }
 }
+
 
 // 保存源到 config.json
 async function saveSource() {
@@ -108,16 +173,15 @@ async function saveSource() {
     apiKey: form.value.apiKey,
     baseUrl: form.value.baseUrl,
     enable: form.value.enable,
-    models: modelList.value
+    models: [...modelList.value.map(m => m.id)],
+    enabledModels: [...enabledModelIds.value]
   }
   await window.api.config.write(config)
 
   // 刷新左侧列表
   isNew.value = false
   selectedSourceId.value = form.value.id
-  // 重新加载列表
-  const newConfig = await window.api.config.read()
-  savedSources.value = Object.entries(newConfig.providers).map(([id, val]: [string, any]) => ({
+  savedSources.value = Object.entries(config.providers).map(([id, val]: [string, any]) => ({
     id,
     provider: val.provider || '',
     apiKey: val.apiKey || '',
@@ -143,11 +207,20 @@ function onProviderChange(val: string) {
   const provider = allProviders.find(p => p.id === val)
   if (provider) {
     form.value.baseUrl = provider.baseUrl
+    if (isNew.value && !form.value.id) {
+      form.value.id = val
+    }
   }
   modelList.value = []
 }
+
+const isOllama = computed(() => {
+  const currentProvider = allProviders.find(p => p.id === form.value.provider)
+  return currentProvider?.id === 'ollama' || currentProvider?.name.toLowerCase().includes('ollama')
+})
 </script>
 
+<!-- BUG FIX: 模型列表无法滚动 -->
 <template>
   <div class="chat-model-panel">
     <n-split :default-size="0.35" :min="0.2" :max="0.5" direction="horizontal">
@@ -176,7 +249,8 @@ function onProviderChange(val: string) {
 
       <!-- 右侧：配置表单 + 模型列表 -->
       <template #2>
-        <div class="right-panel">
+        <n-scrollbar class="right-panel">
+          <div class="right-content">
           <n-form label-placement="top" class="model-form">
             <n-form-item :label="t('model.chatModel')">
               <n-select
@@ -186,13 +260,13 @@ function onProviderChange(val: string) {
                 @update:value="onProviderChange"
               />
             </n-form-item>
-            <n-form-item label="ID">
-              <n-input v-model:value="form.id" :placeholder="t('model.inputId')" :disabled="!isNew" />
+            <n-form-item :label="t('model.inputId')">
+              <n-input v-model:value="form.id" :placeholder="t('model.inputIdPlaceholder')" :disabled="!isNew" />
             </n-form-item>
-            <n-form-item label="API Key">
+            <n-form-item :label="t('model.apiKey')">
               <n-input v-model:value="form.apiKey" type="password" show-password-on="click" :placeholder="t('model.inputApiKey')" />
             </n-form-item>
-            <n-form-item label="API Base URL">
+            <n-form-item :label="t('model.baseUrl')">
               <n-input v-model:value="form.baseUrl" :placeholder="t('model.inputBaseUrl')" />
             </n-form-item>
           </n-form>
@@ -200,27 +274,35 @@ function onProviderChange(val: string) {
           <!-- 模型列表 -->
           <div class="model-list-section">
             <div class="model-list-header">
-              <span>模型列表</span>
+              <span>{{ t('model.modelList') }}</span>
               <n-button
                 size="tiny"
                 :loading="modelsLoading"
-                :disabled="!form.provider || !form.apiKey"
+                :disabled="!form.provider || (!isOllama && !form.apiKey)"
                 @click="refreshModels"
               >
                 <template #icon><n-icon><RefreshOutline /></n-icon></template>
-                刷新
+                {{ t('model.refresh') }}
               </n-button>
             </div>
-            <div class="model-tags" v-if="modelList.length">
-              <n-tag v-for="m in modelList" :key="m" size="small" style="margin: 2px;">{{ m }}</n-tag>
-            </div>
-            <div v-else class="model-empty">点击刷新获取模型列表</div>
+            <n-data-table
+              :columns="modelColumns"
+              :data="modelList"
+              :bordered="false"
+              size="small"
+              :row-key="(row: any) => row.id"
+              max-height="300"
+              v-if="modelList.length"
+            />
+
+            <div v-else class="model-empty">{{ t('model.refreshHint') }}</div>
           </div>
 
           <div class="panel-actions">
             <n-button type="primary" size="small" @click="saveSource">{{ t('model.save') }}</n-button>
           </div>
-        </div>
+          </div>
+        </n-scrollbar>
       </template>
     </n-split>
   </div>
@@ -229,6 +311,11 @@ function onProviderChange(val: string) {
 <style scoped>
 .chat-model-panel {
   height: 100%;
+}
+.chat-model-panel :deep(.n-split-pane-1),
+.chat-model-panel :deep(.n-split-pane-2) {
+  overflow: hidden;
+  min-height: 0;
 }
 
 .source-list {
@@ -282,9 +369,11 @@ function onProviderChange(val: string) {
 }
 
 .right-panel {
-  padding: 16px 20px;
   height: 100%;
-  overflow-y: auto;
+}
+
+.right-content {
+  padding: 16px 20px;
 }
 
 .model-form {

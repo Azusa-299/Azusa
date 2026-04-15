@@ -9,7 +9,8 @@ import {
   NInfiniteScroll,
   NList,
   NListItem,
-  NEmpty
+  NEmpty,
+  NSelect
 } from 'naive-ui'
 import type { DrawerPlacement } from 'naive-ui'
 import { Menu, Send, Add, ChatbubblesOutline, TrashOutline } from '@vicons/ionicons5'
@@ -43,6 +44,14 @@ const sessions = ref<ChatSession[]>([])
 
 // 当前会话的消息
 const messages = ref<ChatMessage[]>([])
+
+// 选择模型
+const selectedOption = ref<string>('')
+const selectOptions = ref([
+  { label: '选项1', value: 'option1' },
+  { label: '选项2', value: 'option2' },
+  { label: '选项3', value: 'option3' }
+])
 
 // 初始化：创建默认会话
 function initSessions() {
@@ -90,7 +99,7 @@ function deleteSession(sessionId: string) {
   const index = sessions.value.findIndex(s => s.id === sessionId)
   if (index > -1) {
     sessions.value.splice(index, 1)
-    
+
     // 如果删除的是当前会话
     if (currentSessionId.value === sessionId) {
       if (sessions.value.length > 0) {
@@ -127,11 +136,10 @@ function sendMessage() {
   messages.value.push({ role: 'user', content: text })
   inputValue.value = ''
   updateCurrentSession()
-  
   // 模拟AI回复（实际项目中这里应该调用API）
   setTimeout(() => {
-    messages.value.push({ 
-      role: 'assistant', 
+    messages.value.push({
+      role: 'assistant',
       content: t('chat.mockReply') 
     })
     updateCurrentSession()
@@ -143,7 +151,7 @@ function formatTime(date: Date): string {
   const now = new Date()
   const diff = now.getTime() - date.getTime()
   const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-  
+
   if (days === 0) {
     return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
   } else if (days === 1) {
@@ -196,10 +204,20 @@ initSessions()
     <!-- 底部：输入框 + 发送按钮，固定底部居中 -->
     <div class="chat-footer">
       <div class="input-box">
+         <n-select
+          v-model:value="selectedOption"
+          :options="selectOptions"
+          placeholder="选择"
+          type="textarea"
+          size="medium"
+          style="width: 100px; margin-right: 8px"
+          />
         <n-input
           v-model:value="inputValue"
           :placeholder="t('chat.inputPlaceholder')"
           :bordered="false"
+          round
+          clearable
           @keyup.enter="sendMessage"
         />
         <n-button
@@ -228,11 +246,11 @@ initSessions()
             {{ t('chat.newConversation') }}
           </n-button>
         </div>
-        
+
         <div class="sessions-list">
           <n-list v-if="sessions.length > 0">
-            <n-list-item 
-              v-for="session in sessions" 
+            <n-list-item
+              v-for="session in sessions"
               :key="session.id"
               :class="['session-item', { active: currentSessionId === session.id }]"
               @click="switchSession(session.id)"
@@ -248,10 +266,10 @@ initSessions()
                     <span class="session-count">{{ session.messages.length }} {{ t('chat.messageCount') }}</span>
                   </div>
                 </div>
-                <n-button 
-                  quaternary 
-                  circle 
-                  size="tiny" 
+                <n-button
+                  quaternary
+                  circle
+                  size="tiny"
                   class="delete-btn"
                   @click.stop="deleteSession(session.id)"
                 >
@@ -358,6 +376,11 @@ initSessions()
   border-radius: 24px;
   background-color: var(--n-color-modal);
   border: 1px solid var(--n-border-color);
+}
+
+.input-box :deep(.n-select) {
+  flex-shrink: 0;
+  margin-right: 8px;
 }
 
 /* 抽屉样式 */

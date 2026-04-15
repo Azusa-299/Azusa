@@ -1,8 +1,9 @@
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import { readConfig, writeConfig } from './config'
-import { fetchModels } from './fetchModels'
+import { readConfig, writeConfig } from './ipc/config'
+import { fetchModels } from './ipc/fetchModels'
+import { chatRequest } from './ipc/chatRequest'
 import icon from '../../resources/icon.png?asset'
 
 function createWindow(): void {
@@ -83,3 +84,6 @@ ipcMain.handle('config:write', (_, data) => writeConfig(data))
 ipcMain.handle('models:fetch', (_, { providerId, apiKey, baseUrl }) => {
   return fetchModels(providerId, apiKey, baseUrl)
 })
+
+// 聊天请求
+ipcMain.handle('chat:request', (_, req) => chatRequest(req))

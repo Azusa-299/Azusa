@@ -34,8 +34,14 @@ model:
   chatModel: Chat Model
   addProvider: Add Provider
   selectModel: Select model
-  inputId: Enter source ID
+  inputId: Source ID
+  inputIdPlaceholder: Enter source ID
+  apiKey: API Key
   inputApiKey: Enter API Key
   inputApiKeyEdit: Leave empty to keep unchanged
+  baseUrl: API Base URL
   inputBaseUrl: Enter API Base URL
+  modelList: Models
+  refresh: Refresh
+  refreshHint: Click refresh to fetch models
   save: Save

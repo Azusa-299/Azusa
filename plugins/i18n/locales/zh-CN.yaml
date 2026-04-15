@@ -34,8 +34,14 @@ model:
   chatModel: 对话模型
   addProvider: 添加模型源
   selectModel: 选择模型
-  inputId: 输入源 ID
+  inputId: 源 ID
+  inputIdPlaceholder: 输入源 ID
+  apiKey: API Key
   inputApiKey: 输入 API Key
   inputApiKeyEdit: 留空保持不变
+  baseUrl: API Base URL
   inputBaseUrl: 输入 API Base URL
+  modelList: 模型列表
+  refresh: 刷新
+  refreshHint: 点击刷新获取模型列表
   save: 保存

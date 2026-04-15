@@ -7,8 +7,8 @@
  * 设计时考虑了接口的统一性，fetchModels 接受 providerId、apiKey 和可选的 customBaseUrl 参数，返回模型 ID 列表
  */
 
-import { allProviders } from '../../plugins/providers/providers'
-import type { Provider } from '../../plugins/providers/types'
+import { allProviders } from '../../../plugins/providers/providers'
+import type { Provider } from '../../../plugins/providers/types'
 
 export async function fetchModels(
   providerId: string,

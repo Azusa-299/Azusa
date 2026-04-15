@@ -141,9 +141,9 @@ const handleMenuClick = (key: string) => {
         </n-layout-sider>
 
         <!-- 右侧内容区域 -->
-        <n-layout-content 
-          content-style="padding: 20px;" 
-          :style="{ backgroundColor: 'var(--n-color, #ffffff)' }"
+        <n-layout-content
+          content-style="padding: 20px; height: 100%;"
+          :style="{ backgroundColor: 'var(--n-color, #ffffff)', height: '100%'}"
         >
           <div class="content-wrapper">
             <component :is="currentComponent" />

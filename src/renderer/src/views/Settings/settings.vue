@@ -80,7 +80,7 @@ const handleThemeChange = (val: string) => {
 
 <style scoped>
 .settings {
-  max-width: 660px;
+  max-width: 760px;
 }
 
 .settings-title {
