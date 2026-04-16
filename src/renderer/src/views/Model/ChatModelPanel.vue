@@ -57,12 +57,12 @@ const enabledModelIds = ref<string[]>([])
 // 初始化：从 config.json 读源列表
 onMounted(async () => {
   const config = await window.api.config.read()
-  if (config.providers) {
-    savedSources.value = Object.entries(config.providers).map(([id, val]: [string, any]) => ({
+  if (config.provider_sources) {
+    savedSources.value = Object.entries(config.provider_sources).map(([id, val]: [string, any]) => ({
       id,
       provider: val.provider || '',
-      apiKey: val.apiKey || '',
-      baseUrl: val.baseUrl || '',
+      apiKey: val.key?.[0] || '',
+      baseUrl: val.api_base || '',
       enable: val.enable !== false
     }))
   }
@@ -129,10 +129,10 @@ function clickNew() {
 // 从 config 读缓存的模型
 async function loadCachedModels(sourceId: string) {
   const config = await window.api.config.read()
-  const models = config.providers?.[sourceId]?.models || []
-  modelList.value = models.map((m: string) => ({ id: m }))
-  // 同步启用状态
-  enabledModelIds.value = config.providers?.[sourceId]?.enabledModels || []
+  // 从 provider 数组中过滤出属于当前 source 的模型
+  const sourceModels = config.provider?.filter((m: any) => m.provider_source_id === sourceId) || []
+  modelList.value = sourceModels.map((m: any) => ({ id: m.model }))
+  enabledModelIds.value = sourceModels.filter((m: any) => m.enable).map((m: any) => m.model)
 }
 
 // 刷新模型列表
@@ -174,22 +174,52 @@ async function saveSource() {
   try {
     message.success(t('model.saveSuccess'))
     const config = await window.api.config.read()
-    if (!config.providers) config.providers = {}
 
-    config.providers[form.value.id] = {
+    // 确保配置结构
+    if (!config.provider_sources) config.provider_sources = {}
+    if (!config.provider) config.provider = []
+
+    // 1. 保存 provider source
+    config.provider_sources[form.value.id] = {
+      id: form.value.id,
       provider: form.value.provider,
-      apiKey: form.value.apiKey,
-      baseUrl: form.value.baseUrl,
-      enable: form.value.enable,
-      models: [...modelList.value.map(m => m.id)],
-      enabledModels: [...enabledModelIds.value]
+      type: 'openai_chat_completion',
+      provider_type: 'chat_completion',
+      key: form.value.apiKey ? [form.value.apiKey] : [],
+      timeout: 120,
+      api_base: form.value.baseUrl || (form.value.provider === 'ollama' ? 'http://localhost:11434/v1' : ''),
+      custom_headers: {},
+      enable: form.value.enable
     }
+
+    // 2. 保存每个模型
+    for (const model of modelList.value) {
+      const modelId = `${form.value.id}/${model.id}`
+      const existingIndex = config.provider.findIndex(m => m.id === modelId)
+
+      const modelConfig = {
+        id: modelId,
+        enable: enabledModelIds.value.includes(model.id),
+        provider_source_id: form.value.id,
+        model: model.id,
+        modalities: ['text'],
+        custom_extra_body: {},
+        max_context_tokens: 0
+      }
+
+      if (existingIndex >= 0) {
+        config.provider[existingIndex] = modelConfig
+      } else {
+        config.provider.push(modelConfig)
+      }
+    }
+
     await window.api.config.write(config)
 
     // 刷新左侧列表
     isNew.value = false
     selectedSourceId.value = form.value.id
-    savedSources.value = Object.entries(config.providers).map(([id, val]: [string, any]) => ({
+    savedSources.value = Object.entries(config.provider_sources).map(([id, val]: [string, any]) => ({
       id,
       provider: val.provider || '',
       apiKey: val.apiKey || '',
@@ -204,7 +234,9 @@ async function saveSource() {
 // 删除源
 async function deleteSource(id: string) {
   const config = await window.api.config.read()
-  delete config.providers[id]
+  delete config.provider_sources[id]
+  // 同时删除关联的模型
+  config.provider = config.provider?.filter((m: any) => m.provider_source_id !== id) || []
   await window.api.config.write(config)
 
   savedSources.value = savedSources.value.filter(s => s.id !== id)

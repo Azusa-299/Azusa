@@ -143,12 +143,8 @@ async function sendMessage() {
   const assistantIndex = messages.value.length - 1
   isStreaming.value = true
 
-  // 解析选择的模型
-  const [sourceId, modelId] = selectedOption.value.split('::')
-
-  // 读取配置获取 apiKey 和 baseUrl
-  const config = await window.api.config.read()
-  const source = config.providers?.[sourceId]
+  // 解析选择的模型：格式为 sourceId/modelId
+  const [sourceId, modelId] = selectedOption.value.split('/')
 
   // 设置流式回调
   window.api.chat.onChunk((chunk: string) => {
@@ -170,12 +166,10 @@ async function sendMessage() {
     window.api.chat.removeAllListeners()
   })
 
-  // 发起流式请求
+  // 发起流式请求（apiKey 和 baseUrl 由主进程从 config 读取）
   await window.api.chat.stream({
-    providerId: source.provider,
+    sourceId,
     modelId,
-    apiKey: source.apiKey,
-    baseUrl: source.baseUrl,
     messages: JSON.parse(JSON.stringify(messages.value.slice(0, -1)))
   })
 }
@@ -217,18 +211,21 @@ function formatTime(date: Date): string {
 // 获取模型列表
 onMounted(async () => {
   const config = await window.api.config.read()
-  if (config.providers) {
-    const opts: { label: string; value: string }[] = []
-    for (const [sourceId, source] of Object.entries(config.providers as Record<string, any>)) {
-      if (!source.enable) continue
-      const enabled = source.enabledModels?.length ? source.enabledModels : source.models || []
-      enabled.forEach((m: string) =>
-        opts.push({ label: m, value: `${sourceId}::${m}` })
-      )
-    }
-    selectOptions.value = opts
-    if (opts.length) selectedOption.value = opts[0].value
+  const models: any[] = config.provider || []
+  const sources: Record<string, any> = config.provider_sources || {}
+  const opts: { label: string; value: string }[] = []
+
+  for (const model of models) {
+    if (!model.enable) continue
+    const source = sources[model.provider_source_id]
+    if (!source?.enable) continue
+    opts.push({
+      label: model.model,
+      value: `${model.provider_source_id}/${model.model}`
+    })
   }
+  selectOptions.value = opts
+  if (opts.length) selectedOption.value = opts[0].value
 })
 
 // 初始化

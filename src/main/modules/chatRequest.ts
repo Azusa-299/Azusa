@@ -6,8 +6,33 @@
  */
 
 import { BrowserWindow } from 'electron'
+import { readConfig } from './config'
 import { allProviders } from '../../../plugins/providers/providers'
 import type { ChatParams, Provider } from '../../../plugins/providers/types'
+
+
+interface SourceConfig {
+  id: string
+  provider: string
+  key: string[]
+  api_base: string
+  custom_headers: Record<string, string>
+  enable: boolean
+}
+
+function getSourceAndProvider(sourceId: string) {
+  const config = readConfig()
+  const source: SourceConfig = config.provider_sources?.[sourceId]
+  if (!source) throw new Error(`Unknown source: ${sourceId}`)
+
+  const providerMeta = allProviders.find(p => p.id === source.provider)
+  if (!providerMeta) throw new Error(`Unknown provider type: ${source.provider}`)
+
+  return { source, providerMeta }
+}
+
+
+
 
 export interface ChatMessage {
   role: 'user' | 'assistant'
@@ -15,24 +40,19 @@ export interface ChatMessage {
 }
 
 export interface ChatRequest {
-  providerId: string
-  modelId: string
-  apiKey: string
+  sourceId: string     // "my-openai" — 对应 provider_sources 的 key
+  modelId: string      // "gpt-4" — 纯模型名
   messages: ChatMessage[]
   params?: ChatParams
 }
 
-// 辅助函数：根据 providerId 获取提供商配置
-function getProviderConfig(providerId: string): Provider {
-  const provider = allProviders.find(p => p.id === providerId)
-  if (!provider) throw new Error(`Unknown provider: ${providerId}`)
-  return provider
-}
-
 // 构建请求头，根据提供商的认证方式
-function buildHeaders(provider: Provider, apiKey: string): Record<string, string> {
+function buildHeaders(provider: Provider, source: SourceConfig): Record<string, string> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  // 合并 custom_headers
+  Object.assign(headers, source.custom_headers || {})
 
+  const apiKey = source.key?.[0] || ''
   switch (provider.authType) {
     case 'bearer':
       headers['Authorization'] = `Bearer ${apiKey}`
@@ -52,12 +72,13 @@ function buildBody(
   provider: Provider,
   modelId: string,
   messages: ChatMessage[],
-  userParams?: ChatParams
+  userParams?: ChatParams,
+  extraBody?: Record<string, any>
 ): Record<string, any> {
-  // 三层合并：Provider默认 → 全局 → 源参数
   const mergedParams = {
     ...provider.defaultParams,
-    ...userParams
+    ...userParams,
+    ...extraBody
   }
 
   const body: Record<string, any> = {
@@ -72,25 +93,19 @@ function buildBody(
   if (provider.id === 'google') {
     body.model = modelId
     body.key = undefined // Google 用 query param
-  } else if (provider.id === 'ollama') {
-    body.model = modelId
-    body.stream = true
-  } else {
-    body.model = modelId
-    body.stream = true
   }
 
   return body
 }
 
-// 解析流式响应中的数据，兼容 OpenAI 和 Ollama 的不同格式
-function buildUrl(provider: Provider, modelId: string, apiKey: string): string {
-  let url = `${provider.baseUrl}${provider.chatEndpoint || '/chat/completions'}`
+// 构建请求 URL，根据源配置和提供商要求
+function buildUrl(source: SourceConfig, provider: Provider, apiKey: string): string {
+  const base = (source.api_base || provider.baseUrl).replace(/\/+$/, '')// 移除末尾斜杠
+  let url = `${base}${provider.chatEndpoint || '/chat/completions'}`// 合并基础 URL和路径
 
   if (provider.id === 'google') {
     url += `?key=${apiKey}`
   }
-
   return url
 }
 
@@ -123,14 +138,34 @@ function parseOpenAIChunk(line: string): string | null {
 let currentAbortController: AbortController | null = null
 let currentReader: ReadableStreamDefaultReader | null = null
 
+
+
+// 获取模型的自定义请求体参数
+function getModelExtraBody(sourceId: string, modelId: string): Record<string, any> {
+  const config = readConfig()
+  const modelConfig = (config.provider || []).find(
+    (m: any) => m.provider_source_id === sourceId && m.model === modelId
+  )
+  return modelConfig?.custom_extra_body || {}
+}
+
+
+
+
 export async function chatRequestStream(
   win: BrowserWindow,
   req: ChatRequest
 ): Promise<void> {
-  const provider = getProviderConfig(req.providerId)
-  const url = buildUrl(provider, req.modelId, req.apiKey)
-  const headers = buildHeaders(provider, req.apiKey)
-  const body = buildBody(provider, req.modelId, req.messages)
+  const { source, providerMeta } = getSourceAndProvider(req.sourceId)
+  // 检查源是否已启用
+  if (!source.enable) {
+    win.webContents.send('chat:stream:error', `源 ${req.sourceId} 已禁用`)
+    return
+  }
+  const url = buildUrl(source, providerMeta, source.key?.[0] || '')
+  const headers = buildHeaders(providerMeta, source)
+  const extraBody = getModelExtraBody(req.sourceId, req.modelId)
+  const body = buildBody(providerMeta, req.modelId, req.messages, req.params, extraBody)
 
   currentAbortController = new AbortController()
 
@@ -151,7 +186,7 @@ export async function chatRequestStream(
   const decoder = new TextDecoder()
   let buffer = ''
 
-  const parseChunk = provider.streamFormat === 'ollama' ? parseOllamaChunk : parseOpenAIChunk
+  const parseChunk = providerMeta.streamFormat === 'ollama' ? parseOllamaChunk : parseOpenAIChunk
 
   try {
     while (currentReader) {
