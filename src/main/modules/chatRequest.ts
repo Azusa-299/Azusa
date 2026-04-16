@@ -76,7 +76,6 @@ function buildBody(
   extraBody?: Record<string, any>
 ): Record<string, any> {
   const mergedParams = {
-    ...provider.defaultParams,
     ...userParams,
     ...extraBody
   }
@@ -185,26 +184,27 @@ export async function chatRequestStream(
 
   currentAbortController = new AbortController()
 
-  const res = await fetch(url, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(body),
-    signal: currentAbortController.signal
-  })
-
-  if (!res.ok) {
-    currentAbortController = null
-    win.webContents.send('chat:stream:error', `请求失败: ${res.status}`)
-    return
-  }
-
-  currentReader = res.body?.getReader() || null
-  const decoder = new TextDecoder()
-  let buffer = ''
-
-  const parseChunk = providerMeta.streamFormat === 'ollama' ? parseOllamaChunk : parseOpenAIChunk
-
+  // 发送请求并处理流式响应
   try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+      signal: currentAbortController.signal
+    })
+
+    if (!res.ok) {
+      currentAbortController = null
+      win.webContents.send('chat:stream:error', `请求失败: ${res.status}`)
+      return
+    }
+
+    currentReader = res.body?.getReader() || null
+    const decoder = new TextDecoder()
+    let buffer = ''
+
+    const parseChunk = providerMeta.streamFormat === 'ollama' ? parseOllamaChunk : parseOpenAIChunk
+
     while (currentReader) {
       // 检查是否已中断
       if (currentAbortController?.signal.aborted) break
