@@ -140,13 +140,29 @@ let currentReader: ReadableStreamDefaultReader | null = null
 
 
 
-// 获取模型的自定义请求体参数
+// 已知字段，不属于请求体的配置字段
+const KNOWN_FIELDS = new Set([
+  'id', 'enable', 'provider_source_id', 'model',
+  'modalities', 'custom_extra_body', 'max_context_tokens'
+])
+
+// 获取模型的自定义请求体参数（顶层未知字段 + custom_extra_body）
 function getModelExtraBody(sourceId: string, modelId: string): Record<string, any> {
   const config = readConfig()
   const modelConfig = (config.provider || []).find(
     (m: any) => m.provider_source_id === sourceId && m.model === modelId
   )
-  return modelConfig?.custom_extra_body || {}
+  if (!modelConfig) return {}
+
+  // 收集顶层未知字段（如 think、temperature 等用户直接写在模型配置上的）
+  const extra: Record<string, any> = {}
+  for (const [key, value] of Object.entries(modelConfig)) {
+    if (!KNOWN_FIELDS.has(key)) {
+      extra[key] = value
+    }
+  }
+  // custom_extra_body 优先级更高，覆盖同名顶层字段
+  return { ...extra, ...modelConfig.custom_extra_body }
 }
 
 
