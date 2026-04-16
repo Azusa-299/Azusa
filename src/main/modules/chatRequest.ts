@@ -7,7 +7,7 @@
 
 import { BrowserWindow } from 'electron'
 import { allProviders } from '../../../plugins/providers/providers'
-import type { Provider } from '../../../plugins/providers/types'
+import type { ChatParams, Provider } from '../../../plugins/providers/types'
 
 export interface ChatMessage {
   role: 'user' | 'assistant'
@@ -19,6 +19,7 @@ export interface ChatRequest {
   modelId: string
   apiKey: string
   messages: ChatMessage[]
+  params?: ChatParams
 }
 
 // 辅助函数：根据 providerId 获取提供商配置
@@ -47,9 +48,27 @@ function buildHeaders(provider: Provider, apiKey: string): Record<string, string
 }
 
 // 构建请求体，根据提供商的要求调整字段
-function buildBody(provider: Provider, modelId: string, messages: ChatMessage[]): Record<string, any> {
-  const body: Record<string, any> = { messages }
+function buildBody(
+  provider: Provider,
+  modelId: string,
+  messages: ChatMessage[],
+  userParams?: ChatParams
+): Record<string, any> {
+  // 三层合并：Provider默认 → 全局 → 源参数
+  const mergedParams = {
+    ...provider.defaultParams,
+    ...userParams
+  }
 
+  const body: Record<string, any> = {
+    messages,
+    model: modelId,
+    stream: true,
+    ...mergedParams
+  }
+
+  // 特殊处理：Google Gemini 不支持 stream: true
+  // Ollama 不支持 stream: true
   if (provider.id === 'google') {
     body.model = modelId
     body.key = undefined // Google 用 query param
@@ -64,7 +83,7 @@ function buildBody(provider: Provider, modelId: string, messages: ChatMessage[])
   return body
 }
 
-// 解析流式响应，兼容 OpenAI 和 Ollama 的不同格式
+// 解析流式响应中的数据，兼容 OpenAI 和 Ollama 的不同格式
 function buildUrl(provider: Provider, modelId: string, apiKey: string): string {
   let url = `${provider.baseUrl}${provider.chatEndpoint || '/chat/completions'}`
 

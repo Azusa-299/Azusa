@@ -2,7 +2,6 @@
  * 模型列表获取模块
  * 负责根据提供商 ID 和 API Key 从对应的 API 获取可用模型列表
  * 目前支持 OpenAI 兼容的 API（如 OpenAI、DeepSeek、Zhipu、Moonshot、Anthropic）以及 Ollama 和 Google 的特殊处理
- * 通过 IPC 暴露 fetchModels 方法给 renderer 调用
  * 未来可以根据需要添加更多提供商的特殊处理逻辑
  * 设计时考虑了接口的统一性，fetchModels 接受 providerId、apiKey 和可选的 customBaseUrl 参数，返回模型 ID 列表
  */

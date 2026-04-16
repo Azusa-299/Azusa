@@ -1,9 +1,9 @@
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import { readConfig, writeConfig } from './ipc/config'
-import { fetchModels } from './ipc/fetchModels'
-import { chatRequestStream, abortChatStream } from './ipc/chatRequest'
+import { readConfig, writeConfig } from './modules/config'
+import { fetchModels } from './modules/fetchModels'
+import { chatRequestStream, abortChatStream } from './modules/chatRequest'
 import icon from '../../resources/icon.png?asset'
 
 function createWindow(): void {
