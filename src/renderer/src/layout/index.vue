@@ -18,6 +18,7 @@ import Chat from '@renderer/views/Chat/chat.vue'
 import Model from '@renderer/views/Model/model.vue'
 import Settings from '@renderer/views/Settings/settings.vue'
 import About from '@renderer/views/About/about.vue'
+import Personality from '@renderer/views/personality/personality.vue'
 
 import {
   HomeOutline as HomeIcon,
@@ -27,7 +28,9 @@ import {
   CubeOutline as ModelIcon,
   SunnyOutline as LightIcon,
   MoonOutline as DarkIcon,
-  ContrastOutline as AutoIcon
+  ContrastOutline as AutoIcon,
+  MoveOutline as MoreIcon,
+  PersonOutline as PersonalityIcon,
 } from '@vicons/ionicons5'
 
 const { t } = useI18n()
@@ -42,6 +45,14 @@ const menuOptions = computed(() => [
   { label: t('sidebar.welcome'), key: 'welcome', icon: renderIcon(HomeIcon) },
   { label: t('sidebar.chat'), key: 'chat', icon: renderIcon(ChatIcon) },
   { label: t('sidebar.model'), key: 'model', icon: renderIcon(ModelIcon) },
+  {
+    label: t('sidebar.more'),
+    key: 'more',
+    icon: renderIcon(MoreIcon),
+    children: [
+      { label: t('sidebar.personality'), key: 'personality', icon: renderIcon(PersonalityIcon) },
+    ]
+  },
   { label: t('sidebar.setting'), key: 'setting', icon: renderIcon(SettingIcon) },
   { label: t('sidebar.about'), key: 'about', icon: renderIcon(AboutIcon) },
 ])
@@ -76,6 +87,7 @@ const currentComponent = computed(() => {
     welcome: Welcome,
     chat: Chat,
     model: Model,
+    personality: Personality,
     setting: Settings,
     about: About,
   }
@@ -125,7 +137,7 @@ const handleMenuClick = (key: string) => {
           :trigger-props="{ placement: 'top-right' }"
           collapse-mode="width"
           :collapsed-width="64"
-          :width="180"
+          :width="200"
           :native-scrollbar="false"
           :style="{ backgroundColor: 'var(--n-color, #ffffff)' }"
         >

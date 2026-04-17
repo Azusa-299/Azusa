@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { NConfigProvider, NMessageProvider, darkTheme } from 'naive-ui'
+import { NConfigProvider, NMessageProvider, NDialogProvider, darkTheme } from 'naive-ui'
 import MainInterface from './layout/index.vue'
 import { useTheme } from './hook/useTheme'
 
@@ -9,7 +9,9 @@ const { activeTheme } = useTheme()
 <template>
   <n-config-provider :theme="activeTheme === 'dark' ? darkTheme : undefined">
     <n-message-provider>
-      <MainInterface />
+      <n-dialog-provider>
+        <MainInterface />
+      </n-dialog-provider>
     </n-message-provider>
   </n-config-provider>
 </template>

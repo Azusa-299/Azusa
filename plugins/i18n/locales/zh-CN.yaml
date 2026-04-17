@@ -2,6 +2,8 @@ sidebar:
   welcome: 欢迎
   chat: 对话
   model: 模型
+  more: 更多
+  personality: 角色
   setting: 设置
   about: 关于
 theme:
@@ -48,3 +50,18 @@ model:
   idRequired: ID 不能为空
   saveSuccess: 保存成功
   saveFailed: 保存失败
+personality:
+  title: 角色
+  roleCard: 角色卡片
+  editCard: 编辑角色卡片
+  userName: 用户昵称
+  userNamePlaceholder: 请输入用户昵称
+  roleName: 角色昵称
+  roleNamePlaceholder: 请输入角色昵称
+  prompt: 提示词
+  promptPlaceholder: 请输入提示词
+  save: 保存
+  deleteTitle: 删除角色
+  confirmDelete: 确定要删除这个角色吗？
+  confirm: 确定
+  cancel: 取消

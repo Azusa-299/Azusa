@@ -2,6 +2,8 @@ sidebar:
   welcome: Welcome
   chat: Chat
   model: Models
+  more: More
+  personality: Personality
   setting: Settings
   about: About
 theme:
@@ -45,3 +47,18 @@ model:
   refresh: Refresh
   refreshHint: Click refresh to fetch models
   save: Save
+personality:
+  title: Personality
+  roleCard: Role Card
+  editCard: Edit Role Card
+  userName: User Name
+  userNamePlaceholder: Enter user name
+  roleName: Role Name
+  roleNamePlaceholder: Enter role name
+  prompt: Prompt
+  promptPlaceholder: Enter prompt
+  save: Save
+  deleteTitle: Delete Role
+  confirmDelete: Are you sure you want to delete this role?
+  confirm: Confirm
+  cancel: Cancel
