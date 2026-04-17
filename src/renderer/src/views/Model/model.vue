@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { NTabs, NTabPane } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import ChatModelPanel from './ChatModelPanel.vue'
 
@@ -10,16 +9,13 @@ const activeTab = ref('chatModel')
 
 <template>
   <div class="model-page">
-    <n-tabs v-model:value="activeTab" type="line" class="model-tabs">
-      <n-tab-pane :name="'chatModel'" :tab="t('model.chatModel')">
-        <ChatModelPanel />
-      </n-tab-pane>
-      <!-- 后续加 tab 在这追加就行，比如：
-      <n-tab-pane name="imageModel" :tab="t('')">
-        <ImageModelPanel />
-      </n-tab-pane>
-      -->
-    </n-tabs>
+    <var-tabs v-model:active="activeTab" class="model-tabs">
+      <var-tab name="chatModel">{{ t('model.chatModel') }}</var-tab>
+    </var-tabs>
+
+    <div class="tab-content">
+      <ChatModelPanel v-if="activeTab === 'chatModel'" />
+    </div>
   </div>
 </template>
 
@@ -31,14 +27,34 @@ const activeTab = ref('chatModel')
 }
 
 .model-tabs {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+  flex-shrink: 0;
+  background: transparent;
 }
 
-/* 让 tab 内容区撑满剩余高度 */
-.model-tabs :deep(.n-tabs-pane-wrapper) {
+.model-tabs :deep(.var-tabs) {
+  background: transparent;
+  border: 1px solid var(--azusa-border);
+  border-radius: 12px;
+}
+
+.model-tabs :deep(.var-tab) {
+  color: var(--azusa-text-soft);
+}
+
+.model-tabs :deep(.var-tab--active) {
+  color: var(--azusa-text);
+  font-weight: 600;
+}
+
+.model-tabs :deep(.var-tabs__indicator-inner) {
+  background: var(--azusa-accent);
+  opacity: 0.7;
+}
+
+.tab-content {
   flex: 1;
-  overflow: auto;
+  min-height: 0;
+  overflow: hidden;
+  padding-top: 8px;
 }
 </style>

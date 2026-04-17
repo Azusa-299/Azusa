@@ -15,7 +15,6 @@
     "paths": {
       "@renderer/*": ["src/renderer/src/*"],
       "@plugins/*": ["plugins/*"]
-    },
-    "ignoreDeprecations": "6.0"
+    }
   }
 }

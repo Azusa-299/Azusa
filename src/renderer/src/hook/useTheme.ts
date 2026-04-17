@@ -1,62 +1,82 @@
-import { ref, watch } from 'vue'
-import { useOsTheme } from 'naive-ui'
+import { computed, ref, watch } from 'vue'
+import { StyleProvider, Themes, type StyleVars } from '@varlet/ui'
 
 export type ThemeMode = 'light' | 'dark' | 'auto'
 
-const currentTheme = ref<ThemeMode>(
-  (localStorage.getItem('theme') as ThemeMode) || 'auto'
-)
+const currentTheme = ref<ThemeMode>((localStorage.getItem('theme') as ThemeMode) || 'auto')
 const activeTheme = ref<'light' | 'dark'>('light')
 
-// 延迟初始化
-let initialized = false
+let mediaQuery: MediaQueryList | null = null
 
-function initTheme() {
-  if (initialized) return
-  initialized = true
-
-  const osTheme = useOsTheme()
-
-  // 立即计算一次
-  const compute = (theme: ThemeMode, os: string | null) => {
-    if (theme === 'auto') {
-      activeTheme.value = os === 'dark' ? 'dark' : 'light'
-    } else {
-      activeTheme.value = theme
-    }
-    document.documentElement.setAttribute('data-theme', activeTheme.value)
-    localStorage.setItem('theme', theme)
-    // 同步 body 背景，解决底部白条问题
-    document.body.style.backgroundColor = activeTheme.value === 'dark' ? '#1e1e1e' : '#f5f5f5'
+function applyVarletTheme(mode: 'light' | 'dark') {
+  const base = mode === 'dark' ? Themes.md3Dark : Themes.md3Light
+  const custom: StyleVars = {
+    ...base,
+    colorPrimary: mode === 'dark' ? '#a990cc' : '#cb6ce6',
+    colorPrimaryContainer: mode === 'dark' ? '#343047' : '#f4d6ff',
+    colorOnPrimaryContainer: mode === 'dark' ? '#e5e0f0' : '#4b2a60',
+    colorSurfaceContainer: mode === 'dark' ? '#232831' : '#fff7fc',
+    colorSurfaceContainerLow: mode === 'dark' ? '#1d222b' : '#fff2fa',
+    colorSurfaceContainerHigh: mode === 'dark' ? '#2a303a' : '#fbe8ff',
+    colorOutline: mode === 'dark' ? '#5e6675' : '#d4a9e6'
   }
 
-  compute(currentTheme.value, osTheme.value)
+  StyleProvider(custom)
+}
 
-  watch([currentTheme, osTheme], ([theme, os]) => {
-    compute(theme, os)
+function resolveAutoTheme() {
+  if (!mediaQuery) {
+    mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+  }
+  return mediaQuery.matches ? 'dark' : 'light'
+}
+
+function compute(theme: ThemeMode) {
+  const resolved = theme === 'auto' ? resolveAutoTheme() : theme
+  activeTheme.value = resolved
+  document.documentElement.setAttribute('data-theme', resolved)
+  localStorage.setItem('theme', theme)
+  applyVarletTheme(resolved)
+}
+
+watch(
+  currentTheme,
+  (theme) => {
+    compute(theme)
+  },
+  { immediate: true }
+)
+
+if (typeof window !== 'undefined') {
+  mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+  mediaQuery.addEventListener('change', () => {
+    if (currentTheme.value === 'auto') {
+      compute('auto')
+    }
   })
 }
 
 export function useTheme() {
-  initTheme()
-
-  const toggleTheme = () => {
-    const themeMap: Record<ThemeMode, ThemeMode> = {
-      light: 'dark',
-      dark: 'auto',
-      auto: 'light'
-    }
-    currentTheme.value = themeMap[currentTheme.value]
-  }
-
   const setTheme = (theme: ThemeMode) => {
     currentTheme.value = theme
   }
 
+  const toggleTheme = () => {
+    const map: Record<ThemeMode, ThemeMode> = {
+      light: 'dark',
+      dark: 'auto',
+      auto: 'light'
+    }
+    currentTheme.value = map[currentTheme.value]
+  }
+
+  const isDark = computed(() => activeTheme.value === 'dark')
+
   return {
     currentTheme,
     activeTheme,
-    toggleTheme,
-    setTheme
+    isDark,
+    setTheme,
+    toggleTheme
   }
 }

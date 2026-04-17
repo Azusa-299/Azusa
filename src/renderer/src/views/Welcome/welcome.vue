@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { NIcon } from 'naive-ui'
 import { RocketOutline } from '@vicons/ionicons5'
 
 const { t } = useI18n()
@@ -9,9 +8,7 @@ const { t } = useI18n()
 <template>
   <div class="welcome">
     <div class="welcome-icon">
-      <n-icon size="48" color="#00a488">
-        <RocketOutline />
-      </n-icon>
+      <component :is="RocketOutline" class="icon" />
     </div>
     <h1 class="welcome-title">{{ t('welcome.title') }}</h1>
     <p class="welcome-subtitle">{{ t('welcome.subtitle') }}</p>
@@ -25,29 +22,36 @@ const { t } = useI18n()
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: calc(100vh - 128px);
+  height: 100%;
   text-align: center;
-  gap: 12px;
-  background: var(--n-color, transparent);
+  gap: 10px;
+}
+
+.welcome-icon {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 30% 30%, #ffd9fb, #e6c2ff 60%, #ddb2ff 100%);
+}
+
+.icon {
+  width: 54px;
+  height: 54px;
+  color: #7f3fb8;
 }
 
 .welcome-title {
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--n-text-color, #2c3e50);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--azusa-text);
   margin: 0;
 }
 
-.welcome-subtitle {
-  font-size: 15px;
-  color: var(--n-text-color-3, #7f8c8d);
-  margin: 0;
-}
-
+.welcome-subtitle,
 .welcome-hint {
-  font-size: 13px;
-  color: var(--n-text-color-3, #7f8c8d);
   margin: 0;
-  opacity: 0.7;
+  color: var(--azusa-text-soft);
 }
 </style>

@@ -1,35 +1,28 @@
 <script setup lang="ts">
-import { NCard, NSpace, NSelect, NIcon, useThemeVars } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
-import { useTheme } from '@renderer/hook/useTheme'
+import { useTheme, type ThemeMode } from '@renderer/hook/useTheme'
 import { LanguageOutline, ColorPaletteOutline } from '@vicons/ionicons5'
-import type { ThemeMode } from '@renderer/hook/useTheme'
 
 const { t, locale } = useI18n()
-const vars = useThemeVars()
 const { currentTheme, setTheme } = useTheme()
 
-// 语言选项
 const localeOptions = [
   { label: '简体中文', value: 'zh-CN' },
   { label: 'English', value: 'en-US' }
 ]
 
-// 主题选项
 const themeOptions = [
   { label: t('theme.light'), value: 'light' },
   { label: t('theme.dark'), value: 'dark' },
   { label: t('theme.auto'), value: 'auto' }
 ]
 
-// 切语言时存到 localStorage
 const handleLocaleChange = (val: string) => {
   locale.value = val
   localStorage.setItem('locale', val)
 }
 
-// 切主题
-const handleThemeChange = (val: string) => {
+const handleThemeChange = (val: string | number) => {
   setTheme(val as ThemeMode)
 }
 </script>
@@ -38,78 +31,117 @@ const handleThemeChange = (val: string) => {
   <div class="settings">
     <h2 class="settings-title">{{ t('settings.title') }}</h2>
 
-    <n-space vertical :size="16">
-      <!-- 语言设置 -->
-      <n-card>
-        <div class="setting-row">
-          <div class="setting-info">
-            <n-icon size="20" :color="vars.primaryColor">
-              <LanguageOutline />
-            </n-icon>
+    <section class="settings-panel">
+      <div class="setting-row">
+        <div class="setting-info">
+          <component :is="LanguageOutline" class="setting-svg" />
+          <div class="setting-texts">
             <span class="setting-label">{{ t('settings.language') }}</span>
+            <span class="setting-desc">UI / i18n</span>
           </div>
-          <n-select
-            :value="locale"
-            :options="localeOptions"
-            style="width: 160px"
-            @update:value="handleLocaleChange"
-          />
         </div>
-      </n-card>
+        <var-select
+          :model-value="locale"
+          :options="localeOptions"
+          style="width: 200px"
+          @change="handleLocaleChange"
+        />
+      </div>
 
-      <!-- 主题设置 -->
-      <n-card>
-        <div class="setting-row">
-          <div class="setting-info">
-            <n-icon size="20" :color="vars.primaryColor">
-              <ColorPaletteOutline />
-            </n-icon>
+      <div class="setting-divider" />
+
+      <div class="setting-row">
+        <div class="setting-info">
+          <component :is="ColorPaletteOutline" class="setting-svg" />
+          <div class="setting-texts">
             <span class="setting-label">{{ t('settings.theme') }}</span>
+            <span class="setting-desc">Light / Dark / Auto</span>
           </div>
-          <n-select
-            :value="currentTheme"
-            :options="themeOptions"
-            style="width: 160px"
-            @update:value="handleThemeChange"
-          />
         </div>
-      </n-card>
-    </n-space>
+        <var-select
+          :model-value="currentTheme"
+          :options="themeOptions"
+          style="width: 200px"
+          @change="handleThemeChange"
+        />
+      </div>
+    </section>
   </div>
 </template>
 
 <style scoped>
 .settings {
-  max-width: 760px;
+  max-width: 820px;
 }
 
 .settings-title {
   font-size: 20px;
-  font-weight: 600;
-  color: v-bind('vars.textColor1');
-  margin: 0px 10px 10px;
+  font-weight: 700;
+  color: var(--azusa-text);
+  margin: 0 0 12px;
+}
+
+.settings-panel {
+  border: 1px solid var(--azusa-border);
+  border-radius: 16px;
+  background: var(--azusa-surface-soft);
+  overflow: hidden;
+}
+
+.setting-divider {
+  height: 1px;
+  background: var(--azusa-border);
+  opacity: 0.8;
+  margin: 0 16px;
 }
 
 .setting-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
 }
 
 .setting-info {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+}
+
+.setting-texts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.setting-svg {
+  width: 20px;
+  height: 20px;
+  color: var(--azusa-accent);
 }
 
 .setting-label {
   font-size: 14px;
-  color: v-bind('vars.textColor1');
+  font-weight: 600;
+  color: var(--azusa-text);
 }
 
-.settings {
-  /* 使用 v-bind 引用主题变量 */
-  color: v-bind('vars.textColor1');
-  background-color: v-bind('vars.cardColor');
+.setting-desc {
+  font-size: 12px;
+  color: var(--azusa-text-soft);
+}
+
+:deep(.var-select .var-field-decorator) {
+  min-height: 40px;
+  border: none;
+  background: var(--azusa-select-bg);
+}
+
+@media (max-width: 900px) {
+  .setting-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 </style>

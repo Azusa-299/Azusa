@@ -1,11 +1,21 @@
-<script setup lang="ts">
-</script>
-
 <template>
-  <div>
-    <n-h1>关于</n-h1>
+  <div class="about-wrap">
   </div>
 </template>
 
-<style>
+<style scoped>
+.about-wrap {
+  height: 100%;
+}
+
+.about-card {
+  max-width: 620px;
+  border: 1px solid var(--azusa-border);
+  background: var(--azusa-surface-soft);
+}
+
+p {
+  margin: 6px 0;
+  color: var(--azusa-text);
+}
 </style>

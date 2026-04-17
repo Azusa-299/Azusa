@@ -23,6 +23,7 @@
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
+    "@varlet/ui": "^3.14.2",
     "@vicons/ionicons5": "^0.13.0",
     "electron-updater": "^6.3.9",
     "vue-i18n": "^11.3.2"
@@ -39,7 +40,6 @@
     "electron-vite": "^5.0.0",
     "eslint": "^9.39.1",
     "eslint-plugin-vue": "^10.6.2",
-    "naive-ui": "^2.44.1",
     "prettier": "^3.7.4",
     "typescript": "^5.9.3",
     "vite": "^7.2.6",

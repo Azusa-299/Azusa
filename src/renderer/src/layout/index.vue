@@ -1,17 +1,7 @@
 <script setup lang="ts">
-import {
-  NLayout,
-  NLayoutHeader,
-  NLayoutSider,
-  NLayoutContent,
-  NMenu,
-  NIcon,
-  NButton,
-  NDropdown
-} from 'naive-ui'
-import { ref, computed, h } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useTheme } from '@renderer/hook/useTheme'
+import { useTheme, type ThemeMode } from '@renderer/hook/useTheme'
 
 import Welcome from '@renderer/views/Welcome/welcome.vue'
 import Chat from '@renderer/views/Chat/chat.vue'
@@ -29,59 +19,30 @@ import {
   SunnyOutline as LightIcon,
   MoonOutline as DarkIcon,
   ContrastOutline as AutoIcon,
-  MoveOutline as MoreIcon,
-  PersonOutline as PersonalityIcon,
+  PersonOutline as PersonalityIcon
 } from '@vicons/ionicons5'
 
 const { t } = useI18n()
 const { currentTheme, setTheme } = useTheme()
 
-// 包装成渲染函数
-function renderIcon(icon: any) {
-  return () => h(NIcon, null, { default: () => h(icon) })
-}
-
-const menuOptions = computed(() => [
-  { label: t('sidebar.welcome'), key: 'welcome', icon: renderIcon(HomeIcon) },
-  { label: t('sidebar.chat'), key: 'chat', icon: renderIcon(ChatIcon) },
-  { label: t('sidebar.model'), key: 'model', icon: renderIcon(ModelIcon) },
-  {
-    label: t('sidebar.more'),
-    key: 'more',
-    icon: renderIcon(MoreIcon),
-    children: [
-      { label: t('sidebar.personality'), key: 'personality', icon: renderIcon(PersonalityIcon) },
-    ]
-  },
-  { label: t('sidebar.setting'), key: 'setting', icon: renderIcon(SettingIcon) },
-  { label: t('sidebar.about'), key: 'about', icon: renderIcon(AboutIcon) },
+const navItems = computed(() => [
+  { label: t('sidebar.welcome'), key: 'welcome', icon: HomeIcon },
+  { label: t('sidebar.chat'), key: 'chat', icon: ChatIcon },
+  { label: t('sidebar.model'), key: 'model', icon: ModelIcon },
+  { label: t('sidebar.personality'), key: 'personality', icon: PersonalityIcon },
+  { label: t('sidebar.setting'), key: 'setting', icon: SettingIcon },
+  { label: t('sidebar.about'), key: 'about', icon: AboutIcon }
 ])
 
-// 主题图标
-const themeIcon = computed(() => {
-  const iconMap = {
-    light: LightIcon,
-    dark: DarkIcon,
-    auto: AutoIcon
-  }
-  return iconMap[currentTheme.value]
-})
-
-// 主题下拉选项
 const themeOptions = computed(() => [
-  { label: t('theme.light'), key: 'light', icon: renderIcon(LightIcon) },
-  { label: t('theme.dark'), key: 'dark', icon: renderIcon(DarkIcon) },
-  { label: t('theme.auto'), key: 'auto', icon: renderIcon(AutoIcon) }
+  { label: t('theme.light'), value: 'light', icon: LightIcon },
+  { label: t('theme.dark'), value: 'dark', icon: DarkIcon },
+  { label: t('theme.auto'), value: 'auto', icon: AutoIcon }
 ])
 
-const handleThemeSelect = (key: string) => {
-  setTheme(key as any)
-}
-
-// 当前选中的菜单项
+const themeMenuShow = ref(false)
 const activeKey = ref('welcome')
 
-// 根据选中的key返回对应的组件
 const currentComponent = computed(() => {
   const componentMap: Record<string, any> = {
     welcome: Welcome,
@@ -89,174 +50,229 @@ const currentComponent = computed(() => {
     model: Model,
     personality: Personality,
     setting: Settings,
-    about: About,
+    about: About
   }
   return componentMap[activeKey.value] || Welcome
 })
 
-const handleMenuClick = (key: string) => {
-  activeKey.value = key
+const themeIcon = computed(() => {
+  const map = {
+    light: LightIcon,
+    dark: DarkIcon,
+    auto: AutoIcon
+  }
+  return map[currentTheme.value]
+})
+
+const handleThemeSelect = (mode: ThemeMode) => {
+  setTheme(mode)
+  themeMenuShow.value = false
 }
 </script>
 
 <template>
-  <div style="height: 100vh; display: flex; flex-direction: column; background: var(--n-color);">
-    <n-layout style="height: 100%; background: transparent;">
-      <!-- 顶部标题栏 -->
-      <n-layout-header bordered style="background-color: var(--n-color, #ffffff); box-shadow: 0 1px 4px rgba(0,0,0,0.04);">
-        <div class="header-content">
-          <div class="header-left">
-            <span class="app-title">Azusa</span>
-            <span class="app-version">v0.0.1</span>
-          </div>
-
-          <div class="header-right">
-            <n-dropdown
-              trigger="click"
-              :options="themeOptions"
-              @select="handleThemeSelect"
-            >
-              <n-button quaternary circle :title="`主题: ${currentTheme}`">
-                <template #icon>
-                  <n-icon size="20">
-                    <component :is="themeIcon" />
-                  </n-icon>
-                </template>
-              </n-button>
-            </n-dropdown>
-          </div>
-        </div>
-      </n-layout-header>
-
-      <!-- 主体区域：左侧菜单 + 右侧内容 -->
-      <div style="flex: 1; display: flex; overflow: hidden;">
-        <!-- 左侧菜单 -->
-        <n-layout-sider
-          bordered
-          show-trigger
-          :trigger-props="{ placement: 'top-right' }"
-          collapse-mode="width"
-          :collapsed-width="64"
-          :width="200"
-          :native-scrollbar="false"
-          :style="{ backgroundColor: 'var(--n-color, #ffffff)' }"
-        >
-          <n-menu
-            v-model:value="activeKey"
-            style="height: 100%; padding: 20px 0;"
-            :options="menuOptions"
-            key-field="key"
-            label-field="label"
-            icon-field="icon"
-            @update:value="handleMenuClick"
-          />
-        </n-layout-sider>
-
-        <!-- 右侧内容区域 -->
-        <n-layout-content
-          content-style="padding: 20px; height: 100%;"
-          :style="{ backgroundColor: 'var(--n-color, #ffffff)', height: '100%'}"
-        >
-          <div class="content-wrapper">
-            <component :is="currentComponent" />
-          </div>
-        </n-layout-content>
+  <div class="app-shell">
+    <header class="header-panel">
+      <div class="header-left">
+        <span class="app-title">Azusa</span>
+        <span class="app-version">v0.0.1</span>
       </div>
-    </n-layout>
+
+      <var-menu v-model:show="themeMenuShow" trigger="click" placement="bottom-end">
+        <var-button round text class="theme-btn" aria-label="theme">
+          <component :is="themeIcon" class="icon" />
+        </var-button>
+
+        <template #menu>
+          <div class="theme-menu">
+            <div
+              v-for="item in themeOptions"
+              :key="item.value"
+              class="theme-menu-item"
+              @click="handleThemeSelect(item.value as ThemeMode)"
+            >
+              <component :is="item.icon" class="icon small" />
+              <span>{{ item.label }}</span>
+            </div>
+          </div>
+        </template>
+      </var-menu>
+    </header>
+
+    <div class="main-body">
+      <aside class="sider-panel">
+        <div
+          v-for="item in navItems"
+          :key="item.key"
+          class="menu-item"
+          :class="{ active: activeKey === item.key }"
+          @click="activeKey = item.key"
+        >
+          <component :is="item.icon" class="icon small" />
+          <span>{{ item.label }}</span>
+        </div>
+      </aside>
+
+      <main class="content-panel">
+        <component :is="currentComponent" />
+      </main>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.header-content {
-  padding: 0 20px;
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 14px;
+  gap: 12px;
+  box-sizing: border-box;
+}
+
+.icon {
+  width: 20px;
+  height: 20px;
+}
+
+.icon.small {
+  width: 16px;
+  height: 16px;
+}
+
+.header-panel {
   height: 64px;
+  border: 1px solid var(--azusa-border);
+  border-radius: 16px;
+  background: var(--azusa-surface);
+  backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 0 16px;
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
+  gap: 10px;
 }
 
 .app-title {
-  background: linear-gradient(135deg, #32f107 0%, #00a488 100%);
+  background: linear-gradient(135deg, #f093fb 0%, #a771ff 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .app-version {
+  color: var(--azusa-text-soft);
   font-size: 12px;
-  color: var(--n-text-color-3);
   padding: 4px 10px;
-  background: var(--n-color-embedded);
-  border-radius: 20px;
-  font-weight: 500;
+  background: var(--azusa-chip-bg);
+  border-radius: 999px;
 }
 
-.content-wrapper {
-  min-height: calc(100vh - 105px);
-  height: calc(100vh - 105px);
-  overflow: hidden;
+.theme-btn {
+  width: 36px;
+  min-width: 36px;
+  color: var(--azusa-text);
 }
 
-/* 菜单项目样式美化 */
-:deep(.n-menu) {
-  background: transparent;
+.theme-menu {
+  min-width: 140px;
+  padding: 6px;
+  border-radius: 12px;
+  background: var(--azusa-surface-strong);
+  border: 1px solid var(--azusa-border);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-:deep(.n-menu-item) {
+.theme-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
   border-radius: 8px;
-  margin: 2px 8px;
+  cursor: pointer;
+  color: var(--azusa-text);
+}
+
+.theme-menu-item:hover {
+  background: var(--azusa-hover);
+}
+
+.main-body {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  gap: 12px;
+}
+
+.sider-panel {
+  width: 220px;
+  border: 1px solid var(--azusa-border);
+  border-radius: 16px;
+  background: var(--azusa-surface);
+  backdrop-filter: blur(10px);
+  padding: 10px;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.menu-item {
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  color: var(--azusa-text);
+  cursor: pointer;
   transition: all 0.2s ease;
 }
 
-::deep(.n-menu-item:hover) {
-  background: var(--n-color-hover, #f5f5f5) !important;
+.menu-item:hover {
+  background: var(--azusa-hover);
 }
 
-:deep(.n-menu-item.n-menu-item--selected) {
-  background: linear-gradient(135deg, #32f107 0%, #00a488 100%) !important;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+.menu-item.active {
+  background: var(--azusa-active);
+  color: var(--azusa-text);
+  box-shadow: var(--azusa-shadow-soft);
 }
 
-:deep(.n-menu-item.n-menu-item--selected .n-menu-item-content) {
-  color: #ffffff !important;
-  font-weight: 500;
+.content-panel {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid var(--azusa-border);
+  border-radius: 16px;
+  background: var(--azusa-surface-strong);
+  backdrop-filter: blur(8px);
+  padding: 16px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
-:deep(.n-menu-item.n-menu-item--selected .n-icon) {
-  color: #ffffff !important;
-}
+@media (max-width: 900px) {
+  .main-body {
+    flex-direction: column;
+  }
 
-::deep(.n-menu-item-content) {
-  color: var(--n-text-color, #2c3e50);
-}
+  .sider-panel {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
 
-::deep(.n-icon) {
-  color: var(--n-text-color-3, #7f8c8d);
-}
-
-:deep(.n-menu-item:hover .n-icon) {
-  color: #00c84d;
-}
-
-::deep(.n-layout-sider-trigger) {
-  background: var(--n-color, #ffffff) !important;
-  border-top: 1px solid var(--n-border-color, #f0f0f0) !important;
-}
-
-:deep(.n-layout-sider-trigger:hover) {
-  background: #f5f5f5 !important;
+  .menu-item {
+    justify-content: center;
+  }
 }
 </style>
