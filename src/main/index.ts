@@ -3,6 +3,7 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { readConfig, writeConfig } from './modules/config'
 import { fetchModels } from './modules/fetchModels'
+import { readAllSessions, readSession, writeSession, deleteSession, createSession } from './modules/sessions'
 import { chatRequestStream, abortChatStream } from './modules/chatRequest'
 import icon from '../../resources/icon.png?asset'
 
@@ -100,3 +101,9 @@ ipcMain.handle('chat:stream', (event, req) => {
 ipcMain.handle('chat:stream:abort', () => {
   abortChatStream()
 })
+
+ipcMain.handle('session:list', () => readAllSessions())
+ipcMain.handle('session:read', (_, sessionId) => readSession(sessionId))
+ipcMain.handle('session:write', (_, session) => writeSession(session))
+ipcMain.handle('session:delete', (_, sessionId) => deleteSession(sessionId))
+ipcMain.handle('session:create', (_, data) => createSession(data))

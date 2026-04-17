@@ -42,6 +42,13 @@ const api = {
       ipcRenderer.removeAllListeners('chat:stream:end')
       ipcRenderer.removeAllListeners('chat:stream:error')
     }
+  },
+  sessions: {
+    list: () => ipcRenderer.invoke('session:list'),
+    read: (id: string) => ipcRenderer.invoke('session:read', id),
+    create: (data: any) => ipcRenderer.invoke('session:create', data),
+    write: (session: any) => ipcRenderer.invoke('session:write', session),
+    delete: (id: string) => ipcRenderer.invoke('session:delete', id)
   }
 }
 

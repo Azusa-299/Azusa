@@ -19,10 +19,19 @@ interface ApiChat {
   removeAllListeners: () => void
 }
 
+interface ApiSessions {
+  list: () => Promise<any[]>
+  read: (id: string) => Promise<any>
+  create: (data: any) => Promise<any>
+  write: (session: any) => Promise<void>
+  delete: (id: string) => Promise<boolean>
+}
+
 interface Api {
   config: ApiConfig
   models: ApiModels
   chat: ApiChat
+  sessions: ApiSessions
 }
 
 declare global {

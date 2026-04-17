@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import {
   NButton,
   NDrawer,
@@ -29,9 +29,11 @@ interface ChatMessage {
 interface ChatSession {
   id: string
   title: string
+  sourceId: string
+  modelId: string
   messages: ChatMessage[]
-  createdAt: Date
-  updatedAt: Date
+  createdAt: number
+  updatedAt: number
 }
 
 // 输入框
@@ -40,7 +42,7 @@ const inputValue = ref('')
 // 当前激活的会话ID
 const currentSessionId = ref<string>('')
 
-// 会话列表
+// 会话列表（摘要，不含 messages）
 const sessions = ref<ChatSession[]>([])
 
 // 当前会话的消息
@@ -53,30 +55,56 @@ const isStreaming = ref(false)
 const selectedOption = ref<string>('')
 const selectOptions = ref<{ label: string; value: string }[]>([])
 
-// 初始化：创建默认会话
-function initSessions() {
-  if (sessions.value.length === 0) {
-    const defaultSession: ChatSession = {
-      id: Date.now().toString(),
-      title: t('chat.newConversation'),
-      messages: [],
-      createdAt: new Date(),
-      updatedAt: new Date()
+// 保存当前会话到磁盘
+async function saveCurrentSession() {
+  if (!currentSessionId.value) return
+  const session = sessions.value.find(s => s.id === currentSessionId.value)
+  if (!session) return
+
+  // 同步最新消息和模型
+  session.messages = [...messages.value]
+  const [sourceId, modelId] = selectedOption.value.split('/')
+  session.sourceId = sourceId || ''
+  session.modelId = modelId || ''
+
+  // 自动生成标题
+  if (session.title === t('chat.newConversation') && messages.value.length > 0) {
+    const firstUserMsg = messages.value.find(m => m.role === 'user')
+    if (firstUserMsg) {
+      session.title = firstUserMsg.content.slice(0, 20) + (firstUserMsg.content.length > 20 ? '...' : '')
     }
-    sessions.value.push(defaultSession)
-    currentSessionId.value = defaultSession.id
   }
+
+  await window.api.sessions.write(JSON.parse(JSON.stringify({
+    id: session.id,
+    title: session.title,
+    sourceId: session.sourceId,
+    modelId: session.modelId,
+    messages: session.messages,
+    createdAt: session.createdAt,
+    updatedAt: Date.now()
+  })))
 }
 
 // 新建会话
-function createNewChat() {
-  const newSession: ChatSession = {
-    id: Date.now().toString(),
-    title: t('chat.newConversation'),
-    messages: [],
-    createdAt: new Date(),
-    updatedAt: new Date()
+async function createNewChat() {
+  // 先保存当前会话
+  if (currentSessionId.value) {
+    await saveCurrentSession()
   }
+
+  const [sourceId, modelId] = selectedOption.value.split('/')
+  const newSession: ChatSession = {
+    id: `session_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    title: t('chat.newConversation'),
+    sourceId: sourceId || '',
+    modelId: modelId || '',
+    messages: [],
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  }
+  // 写入磁盘
+  await window.api.sessions.write(newSession)
   sessions.value.unshift(newSession)
   currentSessionId.value = newSession.id
   messages.value = []
@@ -85,47 +113,47 @@ function createNewChat() {
 }
 
 // 切换会话
-function switchSession(sessionId: string) {
+async function switchSession(sessionId: string) {
+  // 先保存当前会话
+  await saveCurrentSession()
+
   const session = sessions.value.find(s => s.id === sessionId)
-  if (session) {
-    currentSessionId.value = sessionId
-    messages.value = [...session.messages]
-    drawerActive.value = false
+  if (!session) return
+
+  // 从磁盘加载完整消息
+  const fullSession = await window.api.sessions.read(sessionId)
+  if (fullSession) {
+    session.messages = fullSession.messages || []
   }
+
+  currentSessionId.value = sessionId
+  messages.value = [...session.messages]
+
+  // 回填模型选择
+  if (session.sourceId && session.modelId) {
+    const optionValue = `${session.sourceId}/${session.modelId}`
+    if (selectOptions.value.some(o => o.value === optionValue)) {
+      selectedOption.value = optionValue
+    }
+  }
+
+  drawerActive.value = false
 }
 
 // 删除会话
-function deleteSession(sessionId: string) {
+async function deleteSession(sessionId: string) {
+  await window.api.sessions.delete(sessionId)
   const index = sessions.value.findIndex(s => s.id === sessionId)
   if (index > -1) {
     sessions.value.splice(index, 1)
-
-    // 如果删除的是当前会话
-    if (currentSessionId.value === sessionId) {
-      if (sessions.value.length > 0) {
-        // 切换到第一个会话
-        currentSessionId.value = sessions.value[0].id
-        messages.value = [...sessions.value[0].messages]
-      } else {
-        // 没有会话了，创建新会话
-        createNewChat()
-      }
-    }
   }
-}
 
-// 更新当前会话
-function updateCurrentSession() {
-  const session = sessions.value.find(s => s.id === currentSessionId.value)
-  if (session) {
-    session.messages = [...messages.value]
-    session.updatedAt = new Date()
-    // 自动生成标题（取第一条用户消息的前20个字符）
-    if (session.title === t('chat.newConversation') && messages.value.length > 0) {
-      const firstUserMsg = messages.value.find(m => m.role === 'user')
-      if (firstUserMsg) {
-        session.title = firstUserMsg.content.slice(0, 20) + (firstUserMsg.content.length > 20 ? '...' : '')
-      }
+  // 如果删除的是当前会话
+  if (currentSessionId.value === sessionId) {
+    if (sessions.value.length > 0) {
+      await switchSession(sessions.value[0].id)
+    } else {
+      createNewChat()
     }
   }
 }
@@ -136,7 +164,6 @@ async function sendMessage() {
   if (!text) return
   messages.value.push({ role: 'user', content: text })
   inputValue.value = ''
-  updateCurrentSession()
 
   // 添加空的 assistant 消息用于流式填充
   messages.value.push({ role: 'assistant', content: '' })
@@ -146,23 +173,30 @@ async function sendMessage() {
   // 解析选择的模型：格式为 sourceId/modelId
   const [sourceId, modelId] = selectedOption.value.split('/')
 
+  // 更新当前会话的模型信息
+  const session = sessions.value.find(s => s.id === currentSessionId.value)
+  if (session) {
+    session.sourceId = sourceId || ''
+    session.modelId = modelId || ''
+  }
+
   // 设置流式回调
   window.api.chat.onChunk((chunk: string) => {
     messages.value[assistantIndex].content += chunk
   })
 
   // 设置流式结束回调
-  window.api.chat.onEnd(() => {
+  window.api.chat.onEnd(async () => {
     isStreaming.value = false
-    updateCurrentSession()
+    await saveCurrentSession()
     window.api.chat.removeAllListeners()
   })
 
   // 设置流式错误回调
-  window.api.chat.onError((err: string) => {
+  window.api.chat.onError(async (err: string) => {
     isStreaming.value = false
     messages.value[assistantIndex].content += `\n[请求失败: ${err}]`
-    updateCurrentSession()
+    await saveCurrentSession()
     window.api.chat.removeAllListeners()
   })
 
@@ -177,22 +211,24 @@ async function sendMessage() {
 // 停止流式输出
 function stopStreaming() {
   window.api.chat.abort()
-  setTimeout(() => {
+  setTimeout(async () => {
     if (isStreaming.value) {
       isStreaming.value = false
-      updateCurrentSession()
+      await saveCurrentSession()
       window.api.chat.removeAllListeners()
     }
   }, 1000)
 }
 
-// 组件卸载时清理
-onUnmounted(() => {
+// 组件卸载时保存并清理
+onUnmounted(async () => {
+  await saveCurrentSession()
   window.api.chat.removeAllListeners()
 })
 
 // 格式化时间
-function formatTime(date: Date): string {
+function formatTime(timestamp: number): string {
+  const date = new Date(timestamp)
   const now = new Date()
   const diff = now.getTime() - date.getTime()
   const days = Math.floor(diff / (1000 * 60 * 60 * 24))
@@ -208,8 +244,9 @@ function formatTime(date: Date): string {
   }
 }
 
-// 获取模型列表
+// 初始化
 onMounted(async () => {
+  // 1. 加载模型列表
   const config = await window.api.config.read()
   const models: any[] = config.provider || []
   const sources: Record<string, any> = config.provider_sources || {}
@@ -226,10 +263,31 @@ onMounted(async () => {
   }
   selectOptions.value = opts
   if (opts.length) selectedOption.value = opts[0].value
-})
 
-// 初始化
-initSessions()
+  // 2. 加载会话列表
+  const allSessions: any[] = await window.api.sessions.list()
+  sessions.value = allSessions
+
+  // 3. 选中最近会话或创建新会话
+  if (sessions.value.length > 0) {
+    const latest = sessions.value[0]
+    currentSessionId.value = latest.id
+    const fullSession = await window.api.sessions.read(latest.id)
+    if (fullSession) {
+      latest.messages = fullSession.messages || []
+      messages.value = [...latest.messages]
+    }
+    // 回填模型选择
+    if (latest.sourceId && latest.modelId) {
+      const optionValue = `${latest.sourceId}/${latest.modelId}`
+      if (opts.some(o => o.value === optionValue)) {
+        selectedOption.value = optionValue
+      }
+    }
+  } else {
+    createNewChat()
+  }
+})
 </script>
 
 <template>

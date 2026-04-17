@@ -20,6 +20,7 @@ interface SourceConfig {
   enable: boolean
 }
 
+
 function getSourceAndProvider(sourceId: string) {
   const config = readConfig()
   const source: SourceConfig = config.provider_sources?.[sourceId]
@@ -32,12 +33,11 @@ function getSourceAndProvider(sourceId: string) {
 }
 
 
-
-
 export interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
 }
+
 
 export interface ChatRequest {
   sourceId: string     // "my-openai" — 对应 provider_sources 的 key
@@ -45,6 +45,7 @@ export interface ChatRequest {
   messages: ChatMessage[]
   params?: ChatParams
 }
+
 
 // 构建请求头，根据提供商的认证方式
 function buildHeaders(provider: Provider, source: SourceConfig): Record<string, string> {
@@ -66,6 +67,7 @@ function buildHeaders(provider: Provider, source: SourceConfig): Record<string, 
   }
   return headers
 }
+
 
 // 构建请求体，根据提供商的要求调整字段
 function buildBody(
@@ -97,6 +99,7 @@ function buildBody(
   return body
 }
 
+
 // 构建请求 URL，根据源配置和提供商要求
 function buildUrl(source: SourceConfig, provider: Provider, apiKey: string): string {
   const base = (source.api_base || provider.baseUrl).replace(/\/+$/, '')// 移除末尾斜杠
@@ -108,6 +111,7 @@ function buildUrl(source: SourceConfig, provider: Provider, apiKey: string): str
   return url
 }
 
+
 // 解析 Ollama 的流式响应格式
 function parseOllamaChunk(line: string): string | null {
   if (!line.trim()) return null
@@ -118,6 +122,7 @@ function parseOllamaChunk(line: string): string | null {
     return null
   }
 }
+
 
 // 解析 OpenAI 的流式响应格式
 function parseOpenAIChunk(line: string): string | null {
@@ -133,10 +138,10 @@ function parseOpenAIChunk(line: string): string | null {
   }
 }
 
+
 // 当前流式请求的 AbortController 和 Reader
 let currentAbortController: AbortController | null = null
 let currentReader: ReadableStreamDefaultReader | null = null
-
 
 
 // 已知字段，不属于请求体的配置字段
@@ -144,6 +149,7 @@ const KNOWN_FIELDS = new Set([
   'id', 'enable', 'provider_source_id', 'model',
   'modalities', 'custom_extra_body', 'max_context_tokens'
 ])
+
 
 // 获取模型的自定义请求体参数（顶层未知字段 + custom_extra_body）
 function getModelExtraBody(sourceId: string, modelId: string): Record<string, any> {
@@ -163,8 +169,6 @@ function getModelExtraBody(sourceId: string, modelId: string): Record<string, an
   // custom_extra_body 优先级更高，覆盖同名顶层字段
   return { ...extra, ...modelConfig.custom_extra_body }
 }
-
-
 
 
 export async function chatRequestStream(
@@ -235,6 +239,7 @@ export async function chatRequestStream(
     currentReader = null
   }
 }
+
 
 // 中断当前流式请求
 export function abortChatStream(): void {
