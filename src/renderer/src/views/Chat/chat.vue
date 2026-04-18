@@ -374,7 +374,7 @@ onMounted(async () => {
 }
 
 .msg-bubble.user {
-  background: linear-gradient(135deg, var(--azusa-accent) 0%, var(--azusa-accent-soft) 100%);
+  background: linear-gradient(135deg, #d88af3 0%, #c780ff 100%);
   color: #fff;
   border-bottom-right-radius: 4px;
 }
@@ -471,11 +471,11 @@ onMounted(async () => {
 }
 
 .session-item:hover {
-  background: var(--azusa-hover);
+  background: rgba(203, 108, 230, 0.14);
 }
 
 .session-item.active {
-  background: var(--azusa-active);
+  background: rgba(235, 184, 255, 0.36);
 }
 
 .session-icon {

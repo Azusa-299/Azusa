@@ -56,7 +56,7 @@ personality:
   roleName: Role Name
   roleNamePlaceholder: Enter role name
   prompt: Prompt
-  promptPlaceholder: Enter prompt
+  promptPlaceholder: Please start adding the cards from the top right corner
   save: Save
   deleteTitle: Delete Role
   confirmDelete: Are you sure you want to delete this role?

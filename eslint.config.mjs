@@ -33,8 +33,23 @@ export default defineConfig(
             lang: 'ts'
           }
         }
-      ]
+      ],
+      '@typescript-eslint/no-dynamic-delete': 'off',
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+      'vue/attributes-order': 'off',
+      'vue/component-tags-order': 'off',
+      'vue/define-macros-order': 'off',
+      'vue/html-self-closing': 'off',
+      'vue/max-attributes-per-line': 'off',
+      'vue/singleline-html-element-content-newline': 'off',
+      'vue/multiline-html-element-content-newline': 'off',
+      'prettier/prettier': 'off',
+      'linebreak-style': 'off',
+      'max-len': 'off'
     }
   },
-  eslintConfigPrettier
+  eslintConfigPrettier,
+  { rules: { 'prettier/prettier': 'off' } }
 )

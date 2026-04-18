@@ -15,10 +15,12 @@ function ensureConfig(): void {
   if (!fs.existsSync(configPath)) fs.writeFileSync(configPath, '{}', 'utf-8')
 }
 
+
 export function readConfig(): Record<string, any> {
   ensureConfig()
   return JSON.parse(fs.readFileSync(configPath, 'utf-8'))
 }
+
 
 export function writeConfig(data: Record<string, any>): void {
   ensureConfig()

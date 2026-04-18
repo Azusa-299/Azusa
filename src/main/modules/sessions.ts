@@ -22,6 +22,7 @@ export interface Session {
   updatedAt: number
 }
 
+
 // 会话目录
 const sessionsDir = path.join(os.homedir(), '.Azusa', 'sessions')
 
@@ -32,10 +33,12 @@ function ensureSessionsDir(): void {
   }
 }
 
+
 // 获取会话文件路径
 function getSessionPath(sessionId: string): string {
   return path.join(sessionsDir, `${sessionId}.json`)
 }
+
 
 // 读取会话
 export function readSession(sessionId: string): Session | null {
@@ -50,6 +53,7 @@ export function readSession(sessionId: string): Session | null {
     return null
   }
 }
+
 
 // 读取所有会话
 export function readAllSessions(): Session[] {
@@ -67,12 +71,14 @@ export function readAllSessions(): Session[] {
   return sessions.sort((a, b) => b.updatedAt - a.updatedAt)
 }
 
+
 // 写入会话
 export function writeSession(session: Session): void {
   ensureSessionsDir()
   session.updatedAt = Date.now()
   fs.writeFileSync(getSessionPath(session.id), JSON.stringify(session, null, 2), 'utf-8')
 }
+
 
 // 删除会话
 export function deleteSession(sessionId: string): boolean {
@@ -83,6 +89,7 @@ export function deleteSession(sessionId: string): boolean {
   }
   return false
 }
+
 
 // 创建会话
 export function createSession(data: Omit<Session, 'id' | 'createdAt' | 'updatedAt'>): Session {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Dialog } from '@varlet/ui'
 import { Add, CreateOutline as EditIcon, TrashOutline as DeleteIcon } from '@vicons/ionicons5'
@@ -18,6 +18,12 @@ const formData = ref({
 })
 
 const roleCards = ref<Array<{ id: string; userName: string; roleName: string; prompt: string }>>([])
+const canSave = computed(
+  () =>
+    formData.value.userName.trim().length > 0 &&
+    formData.value.roleName.trim().length > 0 &&
+    formData.value.prompt.trim().length > 0
+)
 
 const handleSave = () => {
   if (isEditing.value && editingCardId.value) {
@@ -102,7 +108,19 @@ const truncateText = (text: string) => {
   </div>
 
   <div class="cards-container">
-    <var-card v-for="card in roleCards" :key="card.id" :title="card.roleName" class="role-card">
+    <div v-if="roleCards.length === 0" class="empty-state">
+      <p class="empty-title">{{ t('personality.roleCard') }}</p>
+      <p class="empty-desc">{{ t('personality.promptPlaceholder') }}</p>
+    </div>
+
+    <var-card
+      v-for="card in roleCards"
+      :key="card.id"
+      :title="card.roleName"
+      class="role-card"
+      :class="{ active: activeCardId === card.id }"
+    >
+      <div class="card-status" v-if="activeCardId === card.id">启用中</div>
       <div class="card-content">{{ truncateText(card.prompt) }}</div>
 
       <template #extra>
@@ -147,7 +165,8 @@ const truncateText = (text: string) => {
       </div>
 
       <div class="modal-actions">
-        <var-button block type="primary" @click="handleSave">{{ t('personality.save') }}</var-button>
+        <var-button text @click="showModal = false">{{ t('personality.cancel') }}</var-button>
+        <var-button type="primary" :disabled="!canSave" @click="handleSave">{{ t('personality.save') }}</var-button>
       </div>
     </div>
   </var-popup>
@@ -172,16 +191,55 @@ const truncateText = (text: string) => {
   gap: 14px;
 }
 
+.empty-state {
+  width: 100%;
+  border: 1px dashed var(--azusa-border);
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  color: var(--azusa-text-soft);
+  background: var(--azusa-surface-soft);
+}
+
+.empty-title {
+  margin: 0 0 6px;
+  color: var(--azusa-text);
+  font-weight: 600;
+}
+
+.empty-desc {
+  margin: 0;
+  font-size: 13px;
+}
+
 .role-card {
   width: 280px;
   border: 1px solid var(--azusa-border);
   background: var(--azusa-surface-soft);
+  position: relative;
+}
+
+.role-card.active {
+  border-color: var(--azusa-accent);
+  background: var(--azusa-surface-strong);
+}
+
+.card-status {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 11px;
+  color: #fff;
+  background: var(--azusa-accent);
+  border-radius: 999px;
+  padding: 2px 8px;
 }
 
 .card-content {
-  min-height: 48px;
+  min-height: 56px;
   color: var(--azusa-text);
   line-height: 1.5;
+  font-size: 13px;
 }
 
 .card-actions {
@@ -249,5 +307,8 @@ const truncateText = (text: string) => {
 
 .modal-actions {
   margin-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
 </style>
