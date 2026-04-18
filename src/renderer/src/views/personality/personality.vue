@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Dialog } from '@varlet/ui'
 import { Add, CreateOutline as EditIcon, TrashOutline as DeleteIcon } from '@vicons/ionicons5'
@@ -11,12 +11,14 @@ const isEditing = ref(false)
 const editingCardId = ref<string | null>(null)
 const activeCardId = ref<string | null>(null)
 
+// 角色卡片表单数据
 const formData = ref({
   userName: '',
   roleName: '',
   prompt: ''
 })
 
+// 角色卡片
 const roleCards = ref<Array<{ id: string; userName: string; roleName: string; prompt: string }>>([])
 const canSave = computed(
   () =>
@@ -25,7 +27,25 @@ const canSave = computed(
     formData.value.prompt.trim().length > 0
 )
 
-const handleSave = () => {
+// 持久化角色卡片数据到配置文件
+async function persistCards() {
+  const config = await window.api.config.read()
+  await window.api.config.write({
+    ...config,
+    roleCards: JSON.parse(JSON.stringify(roleCards.value)),
+    activeCardId: activeCardId.value
+  })
+}
+
+// 读取配置文件
+onMounted(async () => {
+  const config = await window.api.config.read()
+  roleCards.value = config.roleCards || []
+  activeCardId.value = config.activeCardId || null
+})
+
+// 处理保存角色卡片（新增或编辑）
+const handleSave = async () => {
   if (isEditing.value && editingCardId.value) {
     const index = roleCards.value.findIndex((card) => card.id === editingCardId.value)
     if (index !== -1) {
@@ -49,8 +69,10 @@ const handleSave = () => {
   isEditing.value = false
   editingCardId.value = null
   formData.value = { userName: '', roleName: '', prompt: '' }
+  await persistCards()
 }
 
+// 处理编辑角色卡片
 const handleEdit = (card: { id: string; userName: string; roleName: string; prompt: string }) => {
   isEditing.value = true
   editingCardId.value = card.id
@@ -62,6 +84,7 @@ const handleEdit = (card: { id: string; userName: string; roleName: string; prom
   showModal.value = true
 }
 
+// 处理删除角色卡片
 const handleDelete = async (cardId: string) => {
   try {
     await Dialog({
@@ -79,23 +102,25 @@ const handleDelete = async (cardId: string) => {
     if (activeCardId.value === cardId) {
       activeCardId.value = null
     }
+    await persistCards()
   } catch {
     // canceled
   }
 }
 
-const handleEnable = (cardId: string, enabled: boolean) => {
-  if (!enabled) {
-    activeCardId.value = null
-    return
-  }
-  activeCardId.value = cardId
+// 处理启用角色卡片
+const handleEnable = async (cardId: string, enabled: boolean) => {
+  activeCardId.value = enabled ? cardId : null
+  await persistCards()
 }
 
-const maxLength = 50
+// 截取文本显示
+const maxLength = 120
 const truncateText = (text: string) => {
-  if (text.length <= maxLength) return text
-  return `${text.slice(0, maxLength)}...`
+  const safeText = typeof text === 'string' ? text.replace(/\s+/g, ' ').trim() : ''
+  const chars = Array.from(safeText)
+  if (chars.length <= maxLength) return safeText
+  return `${chars.slice(0, maxLength).join('')}...`
 }
 </script>
 
@@ -220,7 +245,6 @@ const truncateText = (text: string) => {
 }
 
 .role-card.active {
-  border-color: var(--azusa-accent);
   background: var(--azusa-surface-strong);
 }
 
@@ -240,6 +264,14 @@ const truncateText = (text: string) => {
   color: var(--azusa-text);
   line-height: 1.5;
   font-size: 13px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .card-actions {

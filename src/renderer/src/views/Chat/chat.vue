@@ -8,7 +8,7 @@ const { t } = useI18n()
 const drawerActive = ref(false)
 
 interface ChatMessage {
-  role: 'user' | 'assistant'
+  role: 'user' | 'assistant' | 'system'
   content: string
 }
 
@@ -144,6 +144,16 @@ async function sendMessage() {
     session.modelId = modelId || ''
   }
 
+  const config = await window.api.config.read()
+  const activeCard = (config.roleCards || []).find(
+    (c: any) => c.id === config.activeCardId
+  )
+
+  const messagesToSend: ChatMessage[] = JSON.parse(JSON.stringify(messages.value.slice(0, -1)))
+  if (activeCard?.prompt) {
+    messagesToSend.unshift({ role: 'system', content: activeCard.prompt })
+  }
+
   window.api.chat.onChunk((chunk: string) => {
     messages.value[assistantIndex].content += chunk
   })
@@ -164,7 +174,7 @@ async function sendMessage() {
   await window.api.chat.stream({
     sourceId,
     modelId,
-    messages: JSON.parse(JSON.stringify(messages.value.slice(0, -1)))
+    messages: messagesToSend
   })
 }
 
